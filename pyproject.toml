@@ -1,0 +1,82 @@
+[project]
+name = "agent-plugin-builder"
+license = "GPLv3"
+requires-python = "^3.11"
+
+
+[tool.black]
+line-length = 100
+
+[tool.cruft]
+skip = [
+    "agent-plugin-builder/__init__.py",
+    "README.md",
+    "CHANGELOG.md",
+    "vulture_allowlist.py"
+]
+
+[tool.isort]
+known_first_party = "agent-plugin-builder"
+line_length = 100
+skip_glob="**/__init__.py"
+### for compatibility with black
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+ensure_newline_before_comments = true
+
+[tool.mypy]
+check_untyped_defs = true
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+log_cli = 1
+log_cli_level = "DEBUG"
+log_cli_format = "%(asctime)s [%(levelname)s] %(module)s.%(funcName)s.%(lineno)d: %(message)s"
+log_cli_date_format = "%H:%M:%S"
+addopts = "-v --capture=sys tests"
+
+[tool.vulture]
+exclude=[]
+paths = ["agent_plugin_builder", "vulture_allowlist.py"]
+
+[tool.poetry]
+name = "agent-plugin-builder"
+version = "v0.1.0"
+description = "It should build plugins provided the location of them."
+authors = ["Ilija <ilija.lazoroski@gmail.com>"]
+license = "GPLv3"
+classifiers=[
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Programming Language :: Python :: 3.11"
+]
+repository = "https://github.com/guardicode/agent-plugin-builder"
+readme = "README.md"
+include = ["CHANGELOG.md", "README.md"]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+docker = "^7.1.0"
+monkey-types = "^0.7.0"
+pyyaml = "^6.0.1"
+monkeyevents = "^0.4.0"
+pip = "^24.0"
+pipenv = "^2024.0.1"
+
+[tool.poetry.dev-dependencies]
+black = "24.3.0"
+dlint = "0.14.1"
+flake8 = "6.0.0"
+isort = "5.12.0"
+mypy = "1.5.1"
+pudb = "^2022.1.2"
+pynvim = "^0.4.3"
+pytest = "^7.1.0"
+pytest-cov = "^3.0.0"
+pytest-xdist = "^3.3.1"
+vulture = "2.9.1"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
