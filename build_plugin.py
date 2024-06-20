@@ -15,6 +15,7 @@ from agent_plugin_builder import (
     PlatformDependencyPackagingMethod,
     check_if_common_vendor_dir_possible,
     generate_common_vendor_dir,
+    generate_requirements_file,
     generate_vendor_dirs,
 )
 
@@ -79,6 +80,7 @@ def _generate_vendor_directories(
     UID = os.getuid()
     GID = os.getgid()
 
+    generate_requirements_file(plugin_dir)
     if dependency_method == PlatformDependencyPackagingMethod.COMMON:
         generate_common_vendor_dir(plugin_dir, UID, GID)
     elif dependency_method == PlatformDependencyPackagingMethod.SEPARATE:

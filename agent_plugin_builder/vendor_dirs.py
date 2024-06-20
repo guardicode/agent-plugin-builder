@@ -116,3 +116,13 @@ def generate_windows_vendor_dir(build_dir: Path, uid, gid):
         volumes={build_dir: {"bind": "/plugin", "mode": "rw"}},
         remove=True,
     )
+
+
+def generate_requirements_file(build_dir: Path):
+    if (build_dir / "poetry.lock").exists():
+        command = ["poetry", "export", "-f", "requirements.txt", "-o", "requirements.txt"]
+        subprocess.check_call(command, cwd=str(build_dir))
+    elif (build_dir / "Pipfile.lock").exists():
+        command = ["pipenv", "requirements"]
+        with (build_dir / "requirements.txt").open("w") as f:
+            subprocess.check_call(command, cwd=str(build_dir), stdout=f)

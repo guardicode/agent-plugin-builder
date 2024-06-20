@@ -4,5 +4,6 @@ from .build_options import (
 from .vendor_dirs import ( 
     check_if_common_vendor_dir_possible,
     generate_common_vendor_dir,
+    generate_requirements_file,
     generate_vendor_dirs,
 )
