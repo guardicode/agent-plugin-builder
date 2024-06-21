@@ -1,6 +1,6 @@
-from pathlib import Path
 import json
 from itertools import groupby, islice
+from pathlib import Path
 
 
 def load_package_names(file_path: Path) -> set[str]:
@@ -14,6 +14,6 @@ def take(n: int, iterable) -> list[str]:
     return list(islice(iterable, n))
 
 
-def all_equal(packages: set[str]) -> bool:
+def all_equal(packages: list[set[str]]) -> bool:
     "Returns True if all the elements are equal to each other."
     return len(take(2, groupby(packages, None))) <= 1

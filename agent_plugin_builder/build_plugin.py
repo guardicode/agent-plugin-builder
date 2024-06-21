@@ -1,19 +1,14 @@
+import argparse
+import json
+import shutil
+import tarfile
+from importlib import import_module
 from pathlib import Path
 
-import argparse
-from importlib import import_module
-import shutil
-import tempfile
-import tarfile
 import yaml
-import json
-
 from monkeytypes import AgentPluginManifest
 
-from .build_options import (
-    PlatformDependencyPackagingMethod,
-    parse_agent_plugin_build_options,
-)
+from .build_options import PlatformDependencyPackagingMethod, parse_agent_plugin_build_options
 from .vendor_dirs import (
     check_if_common_vendor_dir_possible,
     generate_common_vendor_dir,
@@ -37,15 +32,15 @@ def main():
 def build_agent_plugin(plugin_path: Path):
     agent_plugin_manifest = _get_agent_plugin_manifest(plugin_path)
 
-    # Temp build dir name
-    tmp_build_dir = tempfile.mkdtemp(
-        prefix=f"build_{agent_plugin_manifest.plugin_type}_{agent_plugin_manifest.name}_"
-    )
-    build_dir = Path(tmp_build_dir)
+    plugin_build_dir = Path.cwd() / "build"
+    if plugin_build_dir.exists():
+        shutil.rmtree(plugin_build_dir)
 
-    shutil.copytree(plugin_path, build_dir, dirs_exist_ok=True)
+    plugin_build_dir.mkdir(exist_ok=True)
 
-    _create_agent_plugin_archive(build_dir, agent_plugin_manifest)
+    shutil.copytree(plugin_path, plugin_build_dir, dirs_exist_ok=True)
+
+    _create_agent_plugin_archive(plugin_build_dir, agent_plugin_manifest)
 
 
 def _get_agent_plugin_manifest(plugin_path: Path) -> AgentPluginManifest:
@@ -148,9 +143,16 @@ def _source_archive_filter(file_info: tarfile.TarInfo):
 
 
 def _create_plugin_archive(build_dir: Path, agent_plugin_manifest: AgentPluginManifest) -> Path:
+    plugin_dist_dir = Path.cwd() / "dist"
+    if not plugin_dist_dir.exists():
+        plugin_dist_dir.mkdir(exist_ok=True)
     plugin_archive = (
-        build_dir / f"{agent_plugin_manifest.name}_{agent_plugin_manifest.plugin_type.value}.tar"
+        plugin_dist_dir
+        / f"{agent_plugin_manifest.name}_{agent_plugin_manifest.plugin_type.value}.tar"
     )
+    if plugin_archive.exists():
+        plugin_archive.unlink()
+
     source_archive = build_dir / "source.tar.gz"
     config_schema_file = build_dir / "config-schema.json"
     agent_plugin_manifest_file = build_dir / "manifest.yaml"
