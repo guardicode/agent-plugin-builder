@@ -44,8 +44,8 @@ paths = ["agent_plugin_builder", "vulture_allowlist.py"]
 [tool.poetry]
 name = "agent-plugin-builder"
 version = "v0.1.0"
-description = "It should build plugins provided the location of them."
-authors = ["Ilija <ilija.lazoroski@gmail.com>"]
+description = "Builder for Agent Plugins."
+authors = ["Ilija Lazoroski <ilija.lazoroski@gmail.com>"]
 license = "GPLv3"
 classifiers=[
     "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
@@ -76,6 +76,9 @@ pytest = "^7.1.0"
 pytest-cov = "^3.0.0"
 pytest-xdist = "^3.3.1"
 vulture = "2.9.1"
+
+[tool.poetry.scripts]
+build_agent_plugin = "agent_plugin_builder.build_plugin:main"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
