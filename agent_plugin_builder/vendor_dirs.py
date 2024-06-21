@@ -31,6 +31,7 @@ def check_if_common_vendor_dir_possible(build_dir: Path, uid, gid) -> bool:
         f"chown -R {uid}:{gid} /plugin/linux.json",
     ]
     windows_commands = (
+        ". /opt/mkuserwineprefix && "
         "cd /plugin && wine pip install --dry-run -r requirements.txt --report "
         f"windows.json && chown {uid}:{gid} /plugin/windows.json"
     )
@@ -106,6 +107,7 @@ def generate_linux_vendor_dir(build_dir: Path, uid, gid):
 def generate_windows_vendor_dir(build_dir: Path, uid, gid):
     client = docker.from_env()
     commands = (
+        ". /opt/mkuserwineprefix && "
         f"cd /plugin && wine pip install -r requirements.txt -t src/vendor-windows && "
         f"chown -R {uid}:{gid} /plugin/src/vendor-windows"
     )
