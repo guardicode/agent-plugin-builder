@@ -12,4 +12,5 @@ RUN cd /tmp && \
 # Make git available in the wine prefix's PATH
 ENV WINEPATH=C:\\git\\cmd
 
-# TODO: Allow non-root user to run wine
+RUN useradd wineuser
+USER wineuser
