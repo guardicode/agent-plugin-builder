@@ -15,8 +15,20 @@ Install Agent Plugin Builder with `pip install .`
 
 ### Running Agent Plugin Builder
 
-After installation,  Agent Plugin Builder can be started by simply invoking
-`build_agent_plugin <PLUGIN_PATH>`, if pip installed it somewhere in your `$PATH`.
+After installation, if pip installed it somewhere in your `$PATH` Agent Plugin Builder
+can be started by simply invoking:
+    `build_agent_plugin <PLUGIN_PATH> -b/--build-dir-path <BUILD_DIR_PATH> -d/--dist-dir-path <DIST_DIR_PATH>`,
+where:
+    ```
+    Required:
+        PLUGIN_PATH: The path where you have the Agent Plugin code. `
+    Optional:
+        -b/--build-dir-path: The path where all needed build artifacts will be stored.
+        Default: <current_working_directory>/build
+
+        -d/--dist-dir-path: The path where resulting Agent Plugin archive will be stored.
+        Default: <current_working_directory>/dist
+    ```
 
 ### Using Poetry
 
@@ -24,14 +36,20 @@ Alternatively one may use Agent Plugin Builder without installing it by
 cloning this repository and invoking
     ```
     poetry install
-    poetry run build_agent_plguin <PLUGIN_PATH>`.
+    poetry run build_agent_plguin <PLUGIN_PATH> -b/--build-dir-path <BUILD_DIR_PATH> -d/--dist-dir-path <DIST_DIR_PATH>``.
     ```
 
-## Resulting artifact
+### Arguments
 
-All build artifacts used to generate the plugin archive will be in `build` directory
-and the Agent Plugin archive will be `dist` in the same directory when the
-Agent Plugin Builder is run.
+Required:
+    `PLUGIN_PATH`: The path where you have the Agent Plugin code.
+Optional:
+    `-b/--build-dir-path`: The path where all needed build artifacts will be stored.
+    Default: `<current_working_directory>/build`
+
+    `-d/--dist-dir-path`: The path where resulting Agent Plugin archive will be stored.
+    Default: `<current_working_directory>/dist`
+
 
 ## Development
 
