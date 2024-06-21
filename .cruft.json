@@ -1,0 +1,37 @@
+{
+  "template": "/home/mcus/repos/cookiecutter_agent_plugin_builder/../infection-monkey-cookiecutter",
+  "commit": "9394e4053a35189221ffa286099753c3ea73ecf5",
+  "checkout": null,
+  "context": {
+    "cookiecutter": {
+      "__project_type": "generic",
+      "project_name": "agent-plugin-builder",
+      "__project_slug": "agent_plugin_builder",
+      "full_name": "Ilija Lazoroski",
+      "email": "ilija.lazoroski@gmail.com",
+      "github_repo": "infection-monkey-template",
+      "platform": "github",
+      "org": "guardicode",
+      "github_url": "guardicode",
+      "url": "https://github.com/guardicode/agent-plugin-builder",
+      "__year": "2024",
+      "license": "GPLv3",
+      "versioning_scheme": "PEP440",
+      "project_short_description": "Builder for Agent Plugins.",
+      "python_major_version": "3",
+      "python_minor_version": "11",
+      "support_type_checking": "y",
+      "hook_shellcheck": "n",
+      "codecov": "y",
+      "exclude_these_file_in_flake8": "vulture_allowlist.py",
+      "_black_version": "24.3.0",
+      "_dlint_version": "0.14.1",
+      "_flake8_version": "6.0.0",
+      "_isort_version": "5.12.0",
+      "_mypy_version": "1.5.1",
+      "_vulture_version": "2.9.1",
+      "_template": "/home/mcus/repos/cookiecutter_agent_plugin_builder/../infection-monkey-cookiecutter"
+    }
+  },
+  "directory": null
+}
