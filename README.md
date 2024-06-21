@@ -9,7 +9,15 @@ run with the mentioned Docker Images needed docker commands.
 
 ## Usage
 
+### CLI
 ```
 poetry install
 poetry run python build_plugin.py PLUGIN_PATH
+```
+
+### Package
+```python
+from agent_plugin_builder import build_plugin
+
+build_plugin(PLUGIN_PATH)
 ```
