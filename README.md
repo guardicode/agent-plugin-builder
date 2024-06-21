@@ -20,12 +20,17 @@ After installation,  Agent Plugin Builder can be started by simply invoking
 
 ### Using Poetry
 
-You can also run it with `poetry run build_agent_plguin <PLUGIN_PATH>`.
+Alternatively one may use Agent Plugin Builder without installing it by
+cloning this repository and invoking
+    ```
+    poetry install
+    poetry run build_agent_plguin <PLUGIN_PATH>`.
+    ```
 
 ## Resulting artifact
 
 All build artifacts used to generate the plugin archive will be in `build` directory
-and the Anget Plugin archive will be `dist` in the same directory when the
+and the Agent Plugin archive will be `dist` in the same directory when the
 Agent Plugin Builder is run.
 
 ## Development
