@@ -1,0 +1,6 @@
+[submodule "docker/wine-docker"]
+	path = docker/wine-docker
+	url = https://github.com/webcomics/wine-docker
+[submodule "docker/pywine"]
+	path = docker/pywine
+	url = https://github.com/webcomics/pywine
