@@ -35,7 +35,15 @@ class AgentPluginBuildOptions(InfectionMonkeyBaseModel):
     ]
 
 
-def parse_agent_plugin_build_options(file: Path) -> AgentPluginBuildOptions:
-    with open(file, "r") as f:
-        data = yaml.safe_load(f)
-        return AgentPluginBuildOptions(**data)
+def parse_agent_plugin_build_options(plugin_path: Path) -> AgentPluginBuildOptions:
+    build_config_file_path = plugin_path / "build.yaml"
+    if not build_config_file_path.exists():
+        build_config_file_path = plugin_path / "build.yml"
+
+    if not build_config_file_path.exists():
+        return AgentPluginBuildOptions(
+            platform_dependencies=PlatformDependencyPackagingMethod.SEPARATE
+        )
+
+    with build_config_file_path.open("r") as f:
+        return AgentPluginBuildOptions(**yaml.safe_load(f))
