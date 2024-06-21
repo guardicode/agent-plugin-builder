@@ -19,24 +19,40 @@ from .vendor_dirs import (
 
 def main():
     parser = argparse.ArgumentParser(description="Build plugin")
-    parser.add_argument("plugin_path", metavar="PLUGIN_PATH", type=str, help="Path to the plugin)")
+    parser.add_argument("plugin_path", metavar="PLUGIN_PATH", type=Path, help="Path to the plugin)")
+    parser.add_argument(
+        "-b",
+        "--build_dir_path",
+        metavar="BUILD_DIR_PATH",
+        type=Path,
+        default=(Path.cwd() / "build"),
+        help="Optional Path to the build directory. Default: <current_working_directory>/build.",
+    )
+    parser.add_argument(
+        "-d",
+        "--dist_dir_path",
+        metavar="DIST_DIR_PATH",
+        type=Path,
+        default=(Path.cwd() / "dist"),
+        help="Optional Path to the dist directory. Default: <current_working_directory>/dist.",
+    )
     args = parser.parse_args()
 
-    plugin_path = Path(args.plugin_path)
-    if not plugin_path.exists():
-        raise FileNotFoundError(f"Plugin path {plugin_path} does not exist")
+    if not args.plugin_path.exists():
+        raise FileNotFoundError(f"Plugin path {args.plugin_path} does not exist")
 
-    build_agent_plugin(plugin_path)
+    build_agent_plugin(args.plugin_path, args.build_dir_path, args.dist_dir_path)
 
 
-def build_agent_plugin(plugin_path: Path):
+def build_agent_plugin(
+    plugin_path: Path,
+    plugin_build_dir: Path = (Path.cwd() / "build"),
+    dist_dir: Path = (Path.cwd() / "dist"),
+):
     agent_plugin_manifest = get_agent_plugin_manifest(plugin_path)
 
-    plugin_build_dir = Path.cwd() / "build"
-    if plugin_build_dir.exists():
-        shutil.rmtree(plugin_build_dir)
-
-    plugin_build_dir.mkdir(exist_ok=True)
+    if not plugin_build_dir.exists():
+        plugin_build_dir.mkdir(exist_ok=True)
 
     shutil.copytree(plugin_path, plugin_build_dir, dirs_exist_ok=True)
 
@@ -52,13 +68,15 @@ def get_agent_plugin_manifest(plugin_path: Path) -> AgentPluginManifest:
         return AgentPluginManifest(**yaml.safe_load(f))
 
 
-def create_agent_plugin_archive(build_dir: Path, manifest: AgentPluginManifest):
+def create_agent_plugin_archive(
+    build_dir: Path, manifest: AgentPluginManifest, dist_dir: Path = (Path.cwd() / "dist")
+):
     build_options = parse_agent_plugin_build_options(build_dir)
     dependency_method = build_options.platform_dependencies
     generate_vendor_directories(build_dir, manifest, dependency_method)
     generate_plugin_config_schema(build_dir, manifest)
     create_source_archive(build_dir)
-    create_plugin_archive(build_dir, manifest)
+    create_plugin_archive(build_dir, manifest, dist_dir)
 
 
 def generate_vendor_directories(
@@ -142,8 +160,11 @@ def _source_archive_filter(file_info: tarfile.TarInfo):
     return file_info
 
 
-def create_plugin_archive(build_dir: Path, agent_plugin_manifest: AgentPluginManifest) -> Path:
-    plugin_dist_dir = Path.cwd() / "dist"
+def create_plugin_archive(
+    build_dir: Path,
+    agent_plugin_manifest: AgentPluginManifest,
+    plugin_dist_dir: Path = (Path.cwd() / "dist"),
+) -> Path:
     if not plugin_dist_dir.exists():
         plugin_dist_dir.mkdir(exist_ok=True)
     plugin_archive = (
