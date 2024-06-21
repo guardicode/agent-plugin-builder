@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import argparse
 from importlib import import_module
 import shutil
 import tempfile
@@ -19,6 +20,18 @@ from .vendor_dirs import (
     generate_requirements_file,
     generate_vendor_dirs,
 )
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Build plugin")
+    parser.add_argument("plugin_path", metavar="PLUGIN_PATH", type=str, help="Path to the plugin)")
+    args = parser.parse_args()
+
+    plugin_path = Path(args.plugin_path)
+    if not plugin_path.exists():
+        raise FileNotFoundError(f"Plugin path {plugin_path} does not exist")
+
+    build_agent_plugin(plugin_path)
 
 
 def build_agent_plugin(plugin_path: Path):
