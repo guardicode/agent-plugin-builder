@@ -171,7 +171,7 @@ def create_plugin_archive(
         dist_dir_path.mkdir(exist_ok=True)
     plugin_archive = (
         dist_dir_path
-        / f"{agent_plugin_manifest.name}_{agent_plugin_manifest.plugin_type.value}.tar"
+        / f"{agent_plugin_manifest.name}_{agent_plugin_manifest.plugin_type.value.lower()}.tar"
     )
     if plugin_archive.exists():
         plugin_archive.unlink()
