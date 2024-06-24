@@ -36,7 +36,7 @@ def main():
         metavar="BUILD_DIR_PATH",
         type=Path,
         default=(Path.cwd() / BUILD),
-        help="Optional Path to the build directory. Default: <current_working_directory>/build.",
+        help="Optional path to the build directory. Default: <current_working_directory>/build.",
     )
     parser.add_argument(
         "-d",
@@ -44,7 +44,7 @@ def main():
         metavar="DIST_DIR_PATH",
         type=Path,
         default=(Path.cwd() / DIST),
-        help="Optional Path to the dist directory. Default: <current_working_directory>/dist.",
+        help="Optional path to the dist directory. Default: <current_working_directory>/dist.",
     )
     parser.add_argument(
         "-v",
@@ -54,7 +54,7 @@ def main():
         default=-1,
         help="Verbosity (between 1-5 occurrences with more leading to more "
         "verbose logging). CRITICAL=1, ERROR=2, WARN=3, INFO=4, "
-        "DEBUG=5. Default(0 or more than 5 occurences)  level: INFO.",
+        "DEBUG=5. Default(0 or more than 5 occurrences)  level: INFO.",
     )
     args = parser.parse_args()
     _setup_logging(args.build_dir_path, args.verbosity)

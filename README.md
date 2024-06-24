@@ -1,8 +1,8 @@
 # Agent Plugin Builder
 
 A package which with a help of `infectionmonkey/agent-builder` and `infectionmonkey/plugin-builder`
-Docker images, builts an Agent Plugin archive which can be installed in Monkey Island and
-used in the simulation over your netwrok.
+Docker images, builds an Agent Plugin archive which can be installed in Monkey Island and
+used in the simulation over your network.
 
 It uses an Python Docker API client to connect to your local Docker environment and
 run with the mentioned Docker Images needed docker commands.
@@ -40,7 +40,7 @@ Alternatively one may use Agent Plugin Builder without installing it by
 cloning this repository and invoking
     ```
     poetry install
-    poetry run build_agent_plguin <PLUGIN_PATH> -b/--build-dir-path <BUILD_DIR_PATH> -d/--dist-dir-path <DIST_DIR_PATH>``.
+    poetry run build_agent_plugin <PLUGIN_PATH> -b/--build-dir-path <BUILD_DIR_PATH> -d/--dist-dir-path <DIST_DIR_PATH>``.
     ```
 
 ### Arguments
