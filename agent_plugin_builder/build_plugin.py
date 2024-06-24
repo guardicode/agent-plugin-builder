@@ -43,7 +43,7 @@ def main():
         "--dist_dir_path",
         metavar="DIST_DIR_PATH",
         type=Path,
-        default=(Path.cwd() / BUILD),
+        default=(Path.cwd() / DIST),
         help="Optional Path to the dist directory. Default: <current_working_directory>/dist.",
     )
     parser.add_argument(
