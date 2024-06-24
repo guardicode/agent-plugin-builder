@@ -73,8 +73,8 @@ def _setup_logging(build_dir_path: Path, verbosity):
 
 def build_agent_plugin(
     plugin_path: Path,
-    build_dir_path: Path = (Path.cwd() / BUILD),
-    dist_dir_path: Path = (Path.cwd() / DIST),
+    build_dir_path: Path,
+    dist_dir_path: Path,
 ):
     if not plugin_path.exists():
         logger.error(f"Plugin path {plugin_path} does not exist")
@@ -104,7 +104,7 @@ def get_agent_plugin_manifest(build_dir_path: Path) -> AgentPluginManifest:
 def create_agent_plugin_archive(
     build_dir_path: Path,
     agent_plugin_manifest: AgentPluginManifest,
-    dist_dir_path: Path = (Path.cwd() / DIST),
+    dist_dir_path: Path,
 ):
     build_options = parse_agent_plugin_build_options(build_dir_path)
     dependency_method = build_options.platform_dependencies
@@ -197,7 +197,7 @@ def _source_archive_filter(file_info: tarfile.TarInfo):
 def create_plugin_archive(
     build_dir_path: Path,
     agent_plugin_manifest: AgentPluginManifest,
-    dist_dir_path: Path = (Path.cwd() / DIST),
+    dist_dir_path: Path,
 ):
     if not dist_dir_path.exists():
         logger.info(f"Creating dist directory: {dist_dir_path}")
