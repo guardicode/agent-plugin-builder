@@ -1,7 +1,6 @@
-import argparse
 import json
-import shutil
 import tarfile
+from argparse import ArgumentParser
 from importlib import import_module
 from pathlib import Path
 
@@ -16,16 +15,22 @@ from .vendor_dirs import (
     generate_vendor_dirs,
 )
 
+BUILD = "build"
+DIST = "dist"
+CONFIG_SCHEMA = "config-schema.json"
+SOURCE = "source"
+MANIFEST = "manifest"
+
 
 def main():
-    parser = argparse.ArgumentParser(description="Build plugin")
+    parser = ArgumentParser(description="Build plugin")
     parser.add_argument("plugin_path", metavar="PLUGIN_PATH", type=Path, help="Path to the plugin)")
     parser.add_argument(
         "-b",
         "--build_dir_path",
         metavar="BUILD_DIR_PATH",
         type=Path,
-        default=(Path.cwd() / "build"),
+        default=(Path.cwd() / BUILD),
         help="Optional Path to the build directory. Default: <current_working_directory>/build.",
     )
     parser.add_argument(
@@ -33,7 +38,7 @@ def main():
         "--dist_dir_path",
         metavar="DIST_DIR_PATH",
         type=Path,
-        default=(Path.cwd() / "dist"),
+        default=(Path.cwd() / BUILD),
         help="Optional Path to the dist directory. Default: <current_working_directory>/dist.",
     )
     args = parser.parse_args()
@@ -46,23 +51,22 @@ def main():
 
 def build_agent_plugin(
     plugin_path: Path,
-    build_dir_path: Path = (Path.cwd() / "build"),
-    dist_dir_path: Path = (Path.cwd() / "dist"),
+    build_dir_path: Path = (Path.cwd() / BUILD),
+    dist_dir_path: Path = (Path.cwd() / DIST),
 ):
-    agent_plugin_manifest = get_agent_plugin_manifest(plugin_path)
-
     if not build_dir_path.exists():
         build_dir_path.mkdir(exist_ok=True)
 
+    import shutil
+
     shutil.copytree(plugin_path, build_dir_path, dirs_exist_ok=True)
 
+    agent_plugin_manifest = get_agent_plugin_manifest(build_dir_path)
     create_agent_plugin_archive(build_dir_path, agent_plugin_manifest, dist_dir_path)
 
 
-def get_agent_plugin_manifest(plugin_path: Path) -> AgentPluginManifest:
-    manifest_file_path = plugin_path / "manifest.yaml"
-    if not manifest_file_path.exists():
-        manifest_file_path = plugin_path / "manifest.yml"
+def get_agent_plugin_manifest(build_dir_path: Path) -> AgentPluginManifest:
+    manifest_file_path = _get_plugin_manifest_filename(build_dir_path)
 
     with manifest_file_path.open("r") as f:
         return AgentPluginManifest(**yaml.safe_load(f))
@@ -71,7 +75,7 @@ def get_agent_plugin_manifest(plugin_path: Path) -> AgentPluginManifest:
 def create_agent_plugin_archive(
     build_dir_path: Path,
     agent_plugin_manifest: AgentPluginManifest,
-    dist_dir_path: Path = (Path.cwd() / "dist"),
+    dist_dir_path: Path = (Path.cwd() / DIST),
 ):
     build_options = parse_agent_plugin_build_options(build_dir_path)
     dependency_method = build_options.platform_dependencies
@@ -111,14 +115,14 @@ def generate_plugin_config_schema(build_dir_path: Path, agent_plugin_manifest: A
     plugin_options_file_path = (
         build_dir_path / "src" / f"{agent_plugin_manifest.name.lower()}_options.py"
     )
-    plugin_config_schema_file_path = build_dir_path / "config-schema.json"
+    plugin_config_schema_file_path = build_dir_path / CONFIG_SCHEMA
     plugin_options_model_name = f"{agent_plugin_manifest.name}Options"
 
     if plugin_config_schema_file_path.exists():
         print(
             "\033[0m\033[91m"
             "Skipping generating config-schema."
-            " Reason: config_schema.json already exists"
+            f" Reason: {CONFIG_SCHEMA} already exists"
             " \033[0m",
         )
         return
@@ -138,11 +142,10 @@ def generate_plugin_config_schema(build_dir_path: Path, agent_plugin_manifest: A
 
 
 def create_source_archive(build_dir_path: Path) -> Path:
-    source_arcname = "source"
-    source_archive = build_dir_path / f"{source_arcname}.tar.gz"
+    source_archive = build_dir_path / f"{SOURCE}.tar.gz"
     source_build_dir_path = build_dir_path / "src"
     with tarfile.open(str(source_archive), "w:gz") as tar:
-        tar.add(source_build_dir_path, arcname=source_arcname, filter=_source_archive_filter)
+        tar.add(source_build_dir_path, arcname=SOURCE, filter=_source_archive_filter)
 
     return source_archive
 
@@ -165,7 +168,7 @@ def _source_archive_filter(file_info: tarfile.TarInfo):
 def create_plugin_archive(
     build_dir_path: Path,
     agent_plugin_manifest: AgentPluginManifest,
-    dist_dir_path: Path = (Path.cwd() / "dist"),
+    dist_dir_path: Path = (Path.cwd() / DIST),
 ) -> Path:
     if not dist_dir_path.exists():
         dist_dir_path.mkdir(exist_ok=True)
@@ -176,11 +179,9 @@ def create_plugin_archive(
     if plugin_archive.exists():
         plugin_archive.unlink()
 
-    source_archive = build_dir_path / "source.tar.gz"
-    config_schema_file = build_dir_path / "config-schema.json"
-    agent_plugin_manifest_file = build_dir_path / "manifest.yaml"
-    if not agent_plugin_manifest_file.exists():
-        agent_plugin_manifest_file = build_dir_path / "manifest.yml"
+    source_archive = build_dir_path / f"{SOURCE}.tar.gz"
+    config_schema_file = build_dir_path / CONFIG_SCHEMA
+    agent_plugin_manifest_file = _get_plugin_manifest_filename(build_dir_path)
 
     with tarfile.open(str(plugin_archive), "w") as tar:
         tar.add(source_archive, arcname=source_archive.name)
@@ -188,3 +189,11 @@ def create_plugin_archive(
         tar.add(agent_plugin_manifest_file, arcname=agent_plugin_manifest_file.name)
 
     return plugin_archive
+
+
+def _get_plugin_manifest_filename(build_dir_path: Path) -> Path:
+    agent_plugin_manifest_file = build_dir_path / f"{MANIFEST}.yaml"
+    if agent_plugin_manifest_file.exists():
+        return agent_plugin_manifest_file
+
+    return build_dir_path / f"{MANIFEST}.yml"
