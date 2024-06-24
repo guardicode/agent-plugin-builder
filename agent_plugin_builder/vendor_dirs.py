@@ -1,11 +1,12 @@
+import logging
 from pathlib import Path
 
-import subprocess
 import docker
-
 from monkeytypes import OperatingSystem
 
 from .compare_package_lists import all_equal, load_package_names
+
+logger = logging.getLogger(__name__)
 
 AGENT_PLUGIN_IMAGE = "infectionmonkey/agent-builder:latest"
 PLUGIN_BUILDER_IMAGE = "infectionmonkey/plugin-builder:latest"
@@ -17,16 +18,10 @@ LINUX_IMAGE_PYENV_INIT_COMMANDS = [
 
 
 def check_if_common_vendor_dir_possible(build_dir: Path, uid, gid) -> bool:
-    requirements_file = build_dir / "requirements.txt"
-    command = ["pipenv", "requirements"]
-    with requirements_file.open("w") as f:
-        subprocess.check_call(command, cwd=str(build_dir), stdout=f)
+    generate_requirements_file(build_dir)
 
     client = docker.from_env()
-    linux_commands = [
-        'export PYENV_ROOT="$HOME/.pyenv"',
-        'command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"',
-        'eval "$(pyenv init -)"',
+    linux_commands = LINUX_IMAGE_PYENV_INIT_COMMANDS + [
         "cd /plugin && pip install --dry-run -r requirements.txt --report linux.json",
         f"chown -R {uid}:{gid} /plugin/linux.json",
     ]
@@ -37,18 +32,22 @@ def check_if_common_vendor_dir_possible(build_dir: Path, uid, gid) -> bool:
     )
 
     full_linux_command = "/bin/bash -c '" + " && ".join(linux_commands) + "'"
-    client.containers.run(
+    linux_container = client.containers.run(
         AGENT_PLUGIN_IMAGE,
         command=full_linux_command,
         volumes={build_dir: {"bind": "/plugin", "mode": "rw"}},
         remove=True,
     )
-    client.containers.run(
+    logger.debug(f"Linux container logs: {linux_container}")
+    _log_container_output(linux_container, "Linux Dry Run requiremenets, ")
+
+    windows_container = client.containers.run(
         PLUGIN_BUILDER_IMAGE,
         command=f'/bin/bash -c "{windows_commands}"',
         volumes={build_dir: {"bind": "/plugin", "mode": "rw"}},
         remove=True,
     )
+    _log_container_output(windows_container, "Windows Dry Run requiremenets, ")
 
     linux_packages_path = build_dir / "linux.json"
     windows_packages_path = build_dir / "windows.json"
@@ -60,6 +59,10 @@ def check_if_common_vendor_dir_possible(build_dir: Path, uid, gid) -> bool:
     windows_packages_path.unlink()
 
     response = all_equal([linux_packages, windows_packages])
+    if response:
+        logger.info("Common vendor directory is possible")
+    else:
+        logger.info("Common vendor directory is not possible")
 
     return response
 
@@ -73,12 +76,13 @@ def generate_common_vendor_dir(build_dir: Path, uid, gid):
 
     full_command = "/bin/bash -c '" + " && ".join(commands) + "'"
 
-    client.containers.run(
+    linux_container = client.containers.run(
         AGENT_PLUGIN_IMAGE,
         command=full_command,
         volumes={str(build_dir): {"bind": "/plugin", "mode": "rw"}},
         remove=True,
     )
+    _log_container_output(linux_container, "Common vendor directory, ")
 
 
 def generate_vendor_dirs(build_dir: Path, operating_system: OperatingSystem, uid, gid):
@@ -96,12 +100,13 @@ def generate_linux_vendor_dir(build_dir: Path, uid, gid):
     ]
 
     full_command = "/bin/bash -c '" + " && ".join(commands) + "'"
-    client.containers.run(
+    linux_container = client.containers.run(
         AGENT_PLUGIN_IMAGE,
         command=full_command,
         volumes={build_dir: {"bind": "/plugin", "mode": "rw"}},
         remove=True,
     )
+    _log_container_output(linux_container, "Linux vendor directory, ")
 
 
 def generate_windows_vendor_dir(build_dir: Path, uid, gid):
@@ -112,15 +117,23 @@ def generate_windows_vendor_dir(build_dir: Path, uid, gid):
         f"chown -R {uid}:{gid} /plugin/src/vendor-windows"
     )
 
-    client.containers.run(
+    windows_container = client.containers.run(
         PLUGIN_BUILDER_IMAGE,
         command=f'/bin/bash -c "{commands}"',
         volumes={build_dir: {"bind": "/plugin", "mode": "rw"}},
         remove=True,
     )
+    _log_container_output(windows_container, "Windows vendor directory, ")
+
+
+def _log_container_output(container_logs: bytes, prefix: str = ""):
+    logger.debug(f"{prefix}Container logs: {container_logs.decode('utf-8')}")
 
 
 def generate_requirements_file(build_dir: Path):
+    import subprocess
+
+    logger.info("Generating requirements file")
     if (build_dir / "poetry.lock").exists():
         command = ["poetry", "export", "-f", "requirements.txt", "-o", "requirements.txt"]
         subprocess.check_call(command, cwd=str(build_dir))
@@ -128,3 +141,6 @@ def generate_requirements_file(build_dir: Path):
         command = ["pipenv", "requirements"]
         with (build_dir / "requirements.txt").open("w") as f:
             subprocess.check_call(command, cwd=str(build_dir), stdout=f)
+
+    if (build_dir / "requirements.txt").exists():
+        logger.info("Requirements file generated")

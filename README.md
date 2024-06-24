@@ -17,7 +17,7 @@ Install Agent Plugin Builder with `pip install .`
 
 After installation, if pip installed it somewhere in your `$PATH` Agent Plugin Builder
 can be started by simply invoking:
-    `build_agent_plugin <PLUGIN_PATH> -b/--build-dir-path <BUILD_DIR_PATH> -d/--dist-dir-path <DIST_DIR_PATH>`,
+    `build_agent_plugin <PLUGIN_PATH> -b/--build-dir-path <BUILD_DIR_PATH> -d/--dist-dir-path <DIST_DIR_PATH> -v/--verbose`,
 where:
     ```
     Required:
@@ -28,6 +28,10 @@ where:
 
         -d/--dist-dir-path: The path where resulting Agent Plugin archive will be stored.
         Default: <current_working_directory>/dist
+
+        -v/--verbose: Multiple occurenences increases the logging level of the console logging.
+        Example: -v means logging.CRITICAL, -vvvvv means logging. DEBUG.
+        Default: if not specific, the logging level will be INFO.
     ```
 
 ### Using Poetry
