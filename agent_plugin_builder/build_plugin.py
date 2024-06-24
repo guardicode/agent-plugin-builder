@@ -46,17 +46,17 @@ def main():
 
 def build_agent_plugin(
     plugin_path: Path,
-    plugin_build_dir: Path = (Path.cwd() / "build"),
-    dist_dir: Path = (Path.cwd() / "dist"),
+    build_dir_path: Path = (Path.cwd() / "build"),
+    dist_dir_path: Path = (Path.cwd() / "dist"),
 ):
     agent_plugin_manifest = get_agent_plugin_manifest(plugin_path)
 
-    if not plugin_build_dir.exists():
-        plugin_build_dir.mkdir(exist_ok=True)
+    if not build_dir_path.exists():
+        build_dir_path.mkdir(exist_ok=True)
 
-    shutil.copytree(plugin_path, plugin_build_dir, dirs_exist_ok=True)
+    shutil.copytree(plugin_path, build_dir_path, dirs_exist_ok=True)
 
-    create_agent_plugin_archive(plugin_build_dir, agent_plugin_manifest)
+    create_agent_plugin_archive(build_dir_path, agent_plugin_manifest, dist_dir_path)
 
 
 def get_agent_plugin_manifest(plugin_path: Path) -> AgentPluginManifest:
@@ -69,18 +69,20 @@ def get_agent_plugin_manifest(plugin_path: Path) -> AgentPluginManifest:
 
 
 def create_agent_plugin_archive(
-    build_dir: Path, manifest: AgentPluginManifest, dist_dir: Path = (Path.cwd() / "dist")
+    build_dir_path: Path,
+    agent_plugin_manifest: AgentPluginManifest,
+    dist_dir_path: Path = (Path.cwd() / "dist"),
 ):
-    build_options = parse_agent_plugin_build_options(build_dir)
+    build_options = parse_agent_plugin_build_options(build_dir_path)
     dependency_method = build_options.platform_dependencies
-    generate_vendor_directories(build_dir, manifest, dependency_method)
-    generate_plugin_config_schema(build_dir, manifest)
-    create_source_archive(build_dir)
-    create_plugin_archive(build_dir, manifest, dist_dir)
+    generate_vendor_directories(build_dir_path, agent_plugin_manifest, dependency_method)
+    generate_plugin_config_schema(build_dir_path, agent_plugin_manifest)
+    create_source_archive(build_dir_path)
+    create_plugin_archive(build_dir_path, agent_plugin_manifest, dist_dir_path)
 
 
 def generate_vendor_directories(
-    plugin_dir: Path,
+    build_dir_path: Path,
     agent_plugin_manifest: AgentPluginManifest,
     dependency_method: PlatformDependencyPackagingMethod,
 ):
@@ -89,27 +91,27 @@ def generate_vendor_directories(
     UID = os.getuid()
     GID = os.getgid()
 
-    generate_requirements_file(plugin_dir)
+    generate_requirements_file(build_dir_path)
     if dependency_method == PlatformDependencyPackagingMethod.COMMON:
-        generate_common_vendor_dir(plugin_dir, UID, GID)
+        generate_common_vendor_dir(build_dir_path, UID, GID)
     elif dependency_method == PlatformDependencyPackagingMethod.SEPARATE:
         for os_type in agent_plugin_manifest.supported_operating_systems:
-            generate_vendor_dirs(plugin_dir, os_type, UID, GID)
+            generate_vendor_dirs(build_dir_path, os_type, UID, GID)
     else:
         if len(agent_plugin_manifest.supported_operating_systems) > 1:
-            common_dir_possible = check_if_common_vendor_dir_possible(plugin_dir, UID, GID)
+            common_dir_possible = check_if_common_vendor_dir_possible(build_dir_path, UID, GID)
             if common_dir_possible:
-                generate_common_vendor_dir(plugin_dir, UID, GID)
+                generate_common_vendor_dir(build_dir_path, UID, GID)
             else:
                 for os_type in agent_plugin_manifest.supported_operating_systems:
-                    generate_vendor_dirs(plugin_dir, os_type, UID, GID)
+                    generate_vendor_dirs(build_dir_path, os_type, UID, GID)
 
 
-def generate_plugin_config_schema(plugin_path: Path, agent_plugin_manifest: AgentPluginManifest):
+def generate_plugin_config_schema(build_dir_path: Path, agent_plugin_manifest: AgentPluginManifest):
     plugin_options_file_path = (
-        plugin_path / "src" / f"{agent_plugin_manifest.name.lower()}_options.py"
+        build_dir_path / "src" / f"{agent_plugin_manifest.name.lower()}_options.py"
     )
-    plugin_config_schema_file_path = plugin_path / "config-schema.json"
+    plugin_config_schema_file_path = build_dir_path / "config-schema.json"
     plugin_options_model_name = f"{agent_plugin_manifest.name}Options"
 
     if plugin_config_schema_file_path.exists():
@@ -126,7 +128,7 @@ def generate_plugin_config_schema(plugin_path: Path, agent_plugin_manifest: Agen
         plugin_options_filename = plugin_options_file_path.stem
         import sys
 
-        sys.path.append(str(plugin_path / "src"))
+        sys.path.append(str(build_dir_path / "src"))
         options = getattr(import_module(plugin_options_filename), plugin_options_model_name)
         config_schema = {"properties": options.model_json_schema()["properties"]}
 
@@ -135,10 +137,10 @@ def generate_plugin_config_schema(plugin_path: Path, agent_plugin_manifest: Agen
         f.write(schema_contents)
 
 
-def create_source_archive(build_dir: Path) -> Path:
+def create_source_archive(build_dir_path: Path) -> Path:
     source_arcname = "source"
-    source_archive = build_dir / f"{source_arcname}.tar.gz"
-    source_build_dir_path = build_dir / "src"
+    source_archive = build_dir_path / f"{source_arcname}.tar.gz"
+    source_build_dir_path = build_dir_path / "src"
     with tarfile.open(str(source_archive), "w:gz") as tar:
         tar.add(source_build_dir_path, arcname=source_arcname, filter=_source_archive_filter)
 
@@ -161,24 +163,24 @@ def _source_archive_filter(file_info: tarfile.TarInfo):
 
 
 def create_plugin_archive(
-    build_dir: Path,
+    build_dir_path: Path,
     agent_plugin_manifest: AgentPluginManifest,
-    plugin_dist_dir: Path = (Path.cwd() / "dist"),
+    dist_dir_path: Path = (Path.cwd() / "dist"),
 ) -> Path:
-    if not plugin_dist_dir.exists():
-        plugin_dist_dir.mkdir(exist_ok=True)
+    if not dist_dir_path.exists():
+        dist_dir_path.mkdir(exist_ok=True)
     plugin_archive = (
-        plugin_dist_dir
+        dist_dir_path
         / f"{agent_plugin_manifest.name}_{agent_plugin_manifest.plugin_type.value}.tar"
     )
     if plugin_archive.exists():
         plugin_archive.unlink()
 
-    source_archive = build_dir / "source.tar.gz"
-    config_schema_file = build_dir / "config-schema.json"
-    agent_plugin_manifest_file = build_dir / "manifest.yaml"
+    source_archive = build_dir_path / "source.tar.gz"
+    config_schema_file = build_dir_path / "config-schema.json"
+    agent_plugin_manifest_file = build_dir_path / "manifest.yaml"
     if not agent_plugin_manifest_file.exists():
-        agent_plugin_manifest_file = build_dir / "manifest.yml"
+        agent_plugin_manifest_file = build_dir_path / "manifest.yml"
 
     with tarfile.open(str(plugin_archive), "w") as tar:
         tar.add(source_archive, arcname=source_archive.name)
