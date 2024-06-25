@@ -30,6 +30,17 @@ def build_agent_plugin(
     build_dir_path: Path,
     dist_dir_path: Path,
 ):
+    """
+    Build the agent plugin by copying the plugin code to the build directory,
+    generating the Agent Plugin archive.
+
+    :param plugin_path: Path to the plugin code.
+        If the directory does not exist, an error will be raised
+    :param build_dir_path: Path to the build directory.
+        If the directory does not exist, it will be created
+    :param dist_dir_path: Path to the dist directory.
+        If the directory does not exist, it will be created
+    """
     if not plugin_path.exists():
         logger.error(f"Plugin path {plugin_path} does not exist")
         raise FileNotFoundError(f"Plugin path {plugin_path} does not exist")
@@ -48,6 +59,11 @@ def build_agent_plugin(
 
 
 def get_agent_plugin_manifest(build_dir_path: Path) -> AgentPluginManifest:
+    """
+    Get the Agent Plugin manifest from the build directory.
+
+    :param build_dir_path: Path to the build directory.
+    """
     manifest_file_path = _get_plugin_manifest_filename(build_dir_path)
 
     logger.info(f"Reading plugin manifest file: {manifest_file_path}")
@@ -60,6 +76,13 @@ def create_agent_plugin_archive(
     agent_plugin_manifest: AgentPluginManifest,
     dist_dir_path: Path,
 ):
+    """
+    Create the Agent Plugin tar archive.
+
+    :param build_dir_path: Path to the build directory.
+    :param agent_plugin_manifest: Agent Plugin manifest.
+    :param dist_dir_path: Path to the dist directory.
+    """
     build_options = parse_agent_plugin_build_options(build_dir_path)
     dependency_method = build_options.platform_dependencies
     generate_vendor_directories(build_dir_path, agent_plugin_manifest, dependency_method)
@@ -73,6 +96,16 @@ def generate_vendor_directories(
     agent_plugin_manifest: AgentPluginManifest,
     dependency_method: PlatformDependencyPackagingMethod,
 ):
+    """
+    Generate the vendor directories for the plugin. If the dependency method is not chosen
+    or if the plugin supports multiple operating systems, the method will try to generate
+    common vendor directories. If common vendor directory are not possible, it will generate
+    separate vendor directories for each supported operating system.
+
+    :param build_dir_path: Path to the build directory.
+    :param agent_plugin_manifest: Agent Plugin manifest.
+    :param dependency_method: Platform dependency packaging method of the vendor directories.
+    """
     import os
 
     UID = os.getuid()
@@ -99,6 +132,13 @@ def generate_vendor_directories(
 
 
 def generate_plugin_config_schema(build_dir_path: Path, agent_plugin_manifest: AgentPluginManifest):
+    """
+    Generate the config-schema file for the plugin. The schema is generated
+    based on the plugin's options model.
+
+    :param build_dir_path: Path to the build directory.
+    :param agent_plugin_manifest: Agent Plugin manifest.
+    """
     plugin_options_file_path = (
         build_dir_path / "src" / f"{agent_plugin_manifest.name.lower()}_options.py"
     )
@@ -106,7 +146,7 @@ def generate_plugin_config_schema(build_dir_path: Path, agent_plugin_manifest: A
     plugin_options_model_name = f"{agent_plugin_manifest.name}Options"
 
     if plugin_config_schema_file_path.exists():
-        logger.info("Skipping generating config-schema. Reason: {CONFIG_SCHEMA} already exists")
+        logger.info(f"Skipping generating config-schema. Reason: {CONFIG_SCHEMA} already exists")
         return
 
     config_schema = {"type": "object"}
@@ -125,6 +165,11 @@ def generate_plugin_config_schema(build_dir_path: Path, agent_plugin_manifest: A
 
 
 def create_source_archive(build_dir_path: Path):
+    """
+    Create the source archive for the plugin.
+
+    :param build_dir_path: Path to the build directory.
+    """
     source_archive = build_dir_path / f"{SOURCE}.tar.gz"
     source_build_dir_path = build_dir_path / "src"
 
@@ -153,6 +198,13 @@ def create_plugin_archive(
     agent_plugin_manifest: AgentPluginManifest,
     dist_dir_path: Path,
 ):
+    """
+    Create the Agent Plugin archive.
+
+    :param build_dir_path: Path to the build directory.
+    :param agent_plugin_manifest: Agent Plugin manifest.
+    :param dist_dir_path: Path to the dist directory.
+    """
     if not dist_dir_path.exists():
         logger.info(f"Creating dist directory: {dist_dir_path}")
         dist_dir_path.mkdir(exist_ok=True)

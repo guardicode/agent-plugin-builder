@@ -39,6 +39,11 @@ class AgentPluginBuildOptions(InfectionMonkeyBaseModel):
 
 
 def parse_agent_plugin_build_options(plugin_path: Path) -> AgentPluginBuildOptions:
+    """
+    Parse the build options for an agent plugin from the plugin's directory.
+
+    :param plugin_path: The path to the plugin code directory.
+    """
     build_config_file_path = plugin_path / "build.yaml"
     if not build_config_file_path.exists():
         build_config_file_path = plugin_path / "build.yml"

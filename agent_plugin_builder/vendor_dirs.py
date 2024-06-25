@@ -18,6 +18,14 @@ LINUX_IMAGE_PYENV_INIT_COMMANDS = [
 
 
 def check_if_common_vendor_dir_possible(build_dir: Path, uid, gid) -> bool:
+    """
+    Check if a common vendor directory is possible by comparing the package lists generated
+    from a dry run of the requirements installation on Linux and Windows.
+
+    :param build_dir: Path to the build directory.
+    :param uid: User ID to set on the vendor directory.
+    :param gid: Group ID to set on the vendor directory.
+    """
     generate_requirements_file(build_dir)
 
     client = docker.from_env()
@@ -68,6 +76,13 @@ def check_if_common_vendor_dir_possible(build_dir: Path, uid, gid) -> bool:
 
 
 def generate_common_vendor_dir(build_dir: Path, uid, gid):
+    """
+    Generate a common vendor directory by installing the requirements in a Linux container.
+
+    :param build_dir: Path to the build directory.
+    :param uid: User ID to set on the vendor directory.
+    :param gid: Group ID to set on the vendor directory.
+    """
     client = docker.from_env()
     commands = LINUX_IMAGE_PYENV_INIT_COMMANDS + [
         "cd /plugin && pip install -r requirements.txt -t src/vendor",
@@ -86,6 +101,14 @@ def generate_common_vendor_dir(build_dir: Path, uid, gid):
 
 
 def generate_vendor_dirs(build_dir: Path, operating_system: OperatingSystem, uid, gid):
+    """
+    Generate the vendor directories for the plugin.
+
+    :param build_dir: Path to the build directory.
+    :param operating_system: Operating system to generate the vendor directories for.
+    :param uid: User ID to set on the vendor directory.
+    :param gid: Group ID to set on the vendor directory.
+    """
     if operating_system == OperatingSystem.LINUX:
         generate_linux_vendor_dir(build_dir, uid, gid)
     elif operating_system == OperatingSystem.WINDOWS:
@@ -93,6 +116,13 @@ def generate_vendor_dirs(build_dir: Path, operating_system: OperatingSystem, uid
 
 
 def generate_linux_vendor_dir(build_dir: Path, uid, gid):
+    """
+    Generate the Linux vendor directory by installing the requirements in a Linux container.
+
+    :param build_dir: Path to the build directory.
+    :param uid: User ID to set on the vendor directory.
+    :param gid: Group ID to set on the vendor directory.
+    """
     client = docker.from_env()
     commands = LINUX_IMAGE_PYENV_INIT_COMMANDS + [
         "cd /plugin && pip install -r requirements.txt -t src/vendor-linux",
@@ -110,6 +140,14 @@ def generate_linux_vendor_dir(build_dir: Path, uid, gid):
 
 
 def generate_windows_vendor_dir(build_dir: Path, uid, gid):
+    """
+    Generate the Windows vendor directory by installing the requirements in a Linux Container
+    with Wine installed.
+
+    :param build_dir: Path to the build directory.
+    :param uid: User ID to set on the vendor directory.
+    :param gid: Group ID to set on the vendor directory.
+    """
     client = docker.from_env()
     commands = (
         ". /opt/mkuserwineprefix && "
@@ -131,6 +169,11 @@ def _log_container_output(container_logs: bytes, prefix: str = ""):
 
 
 def generate_requirements_file(build_dir: Path):
+    """
+    Generate the requirements file from the lock file depending on the lock file present.
+
+    :param build_dir: Path to the build directory.
+    """
     import subprocess
 
     logger.info("Generating requirements file")
