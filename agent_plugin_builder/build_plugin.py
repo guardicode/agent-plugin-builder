@@ -188,7 +188,8 @@ def create_source_archive(build_dir_path: Path):
 
     logger.info(f"Creating source archive: {source_archive} ")
     with tarfile.open(str(source_archive), "w:gz") as tar:
-        tar.add(source_build_dir_path, arcname=SOURCE, filter=_source_archive_filter)
+        for item in source_build_dir_path.iterdir():
+            tar.add(item, arcname=item.name, filter=_source_archive_filter)
 
 
 def _source_archive_filter(file_info: tarfile.TarInfo) -> tarfile.TarInfo | None:
