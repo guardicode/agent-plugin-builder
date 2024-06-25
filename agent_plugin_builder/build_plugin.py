@@ -51,11 +51,21 @@ def build_agent_plugin(
         logger.info(f"Creating build directory: {build_dir_path}")
         build_dir_path.mkdir(exist_ok=True)
     else:
-        logger.info(f"Clearing build directory: {build_dir_path}")
-        shutil.rmtree(build_dir_path)
+        try:
+            logger.info(f"Clearing build directory: {build_dir_path}")
+            shutil.rmtree(build_dir_path)
+        except shutil.Error as err:
+            logger.error(f"Unable to clear build directory: {build_dir_path}")
+            raise err
 
-    logger.info(f"Copying plugin code to build directory: {plugin_path} -> {build_dir_path}")
-    shutil.copytree(plugin_path, build_dir_path, dirs_exist_ok=True)
+    try:
+        logger.info(f"Copying plugin code to build directory: {plugin_path} -> {build_dir_path}")
+        shutil.copytree(plugin_path, build_dir_path, dirs_exist_ok=True)
+    except shutil.Error as err:
+        logger.error(
+            f"Unable to copy plugin code to build directory: {plugin_path} -> {build_dir_path}"
+        )
+        raise err
 
     agent_plugin_manifest = get_agent_plugin_manifest(build_dir_path)
     create_agent_plugin_archive(build_dir_path, agent_plugin_manifest, dist_dir_path)
