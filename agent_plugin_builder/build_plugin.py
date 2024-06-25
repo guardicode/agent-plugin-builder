@@ -178,7 +178,7 @@ def create_source_archive(build_dir_path: Path):
         tar.add(source_build_dir_path, arcname=SOURCE, filter=_source_archive_filter)
 
 
-def _source_archive_filter(file_info: tarfile.TarInfo):
+def _source_archive_filter(file_info: tarfile.TarInfo) -> tarfile.TarInfo | None:
     EXCLUDE_FILES = [
         "__pycache__",
         ".mypy_cache",

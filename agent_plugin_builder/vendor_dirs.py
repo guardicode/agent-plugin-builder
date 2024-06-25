@@ -17,7 +17,7 @@ LINUX_IMAGE_PYENV_INIT_COMMANDS = [
 ]
 
 
-def check_if_common_vendor_dir_possible(build_dir: Path, uid, gid) -> bool:
+def check_if_common_vendor_dir_possible(build_dir: Path, uid: int, gid: int) -> bool:
     """
     Check if a common vendor directory is possible by comparing the package lists generated
     from a dry run of the requirements installation on Linux and Windows.
@@ -75,7 +75,7 @@ def check_if_common_vendor_dir_possible(build_dir: Path, uid, gid) -> bool:
     return response
 
 
-def generate_common_vendor_dir(build_dir: Path, uid, gid):
+def generate_common_vendor_dir(build_dir: Path, uid: int, gid: int):
     """
     Generate a common vendor directory by installing the requirements in a Linux container.
 
@@ -100,7 +100,7 @@ def generate_common_vendor_dir(build_dir: Path, uid, gid):
     _log_container_output(linux_container, "Common vendor directory, ")
 
 
-def generate_vendor_dirs(build_dir: Path, operating_system: OperatingSystem, uid, gid):
+def generate_vendor_dirs(build_dir: Path, operating_system: OperatingSystem, uid: int, gid: int):
     """
     Generate the vendor directories for the plugin.
 
@@ -115,7 +115,7 @@ def generate_vendor_dirs(build_dir: Path, operating_system: OperatingSystem, uid
         generate_windows_vendor_dir(build_dir, uid, gid)
 
 
-def generate_linux_vendor_dir(build_dir: Path, uid, gid):
+def generate_linux_vendor_dir(build_dir: Path, uid: int, gid: int):
     """
     Generate the Linux vendor directory by installing the requirements in a Linux container.
 
@@ -139,7 +139,7 @@ def generate_linux_vendor_dir(build_dir: Path, uid, gid):
     _log_container_output(linux_container, "Linux vendor directory, ")
 
 
-def generate_windows_vendor_dir(build_dir: Path, uid, gid):
+def generate_windows_vendor_dir(build_dir: Path, uid: int, gid: int):
     """
     Generate the Windows vendor directory by installing the requirements in a Linux Container
     with Wine installed.
