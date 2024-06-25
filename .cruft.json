@@ -1,5 +1,5 @@
 {
-  "template": "/home/mcus/repos/cookiecutter_agent_plugin_builder/../infection-monkey-cookiecutter",
+  "template": "https://github.com/guardicode/infection-monkey-cookiecutter",
   "commit": "9394e4053a35189221ffa286099753c3ea73ecf5",
   "checkout": null,
   "context": {
@@ -30,7 +30,7 @@
       "_isort_version": "5.12.0",
       "_mypy_version": "1.5.1",
       "_vulture_version": "2.9.1",
-      "_template": "/home/mcus/repos/cookiecutter_agent_plugin_builder/../infection-monkey-cookiecutter"
+      "_template": "https://github.com/guardicode/infection-monkey-cookiecutter"
     }
   },
   "directory": null
