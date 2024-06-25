@@ -4,6 +4,7 @@ import sys
 from pathlib import Path
 
 AGENT_PLUGIN_BUILDER_LOG_FILENAME = "agent_plugin_builder.log"
+CONSOLE_FORMAT = "%(asctime)s - %(message)s"
 LOG_FORMAT = "%(asctime)s - %(levelname)s - %(filename)s:%(lineno)s - %(funcName)s() - %(message)s"
 FILE_MAX_BYTES = 10485760
 FILE_ENCODING = "utf8"
@@ -35,7 +36,7 @@ def setup_logging(data_dir: Path, verbosity: int):
 
     _add_file_handler(logger, formatter, log_file_path)
 
-    _add_console_handler(logger, formatter, verbosity)
+    _add_console_handler(logger, logging.Formatter(CONSOLE_FORMAT), verbosity)
 
 
 def _get_log_formatter():
