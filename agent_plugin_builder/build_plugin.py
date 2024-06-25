@@ -37,10 +37,12 @@ def build_agent_plugin(
     :param plugin_path: Path to the plugin code.
         If the directory does not exist, an error will be raised
     :param build_dir_path: Path to the build directory.
-        If the directory does not exist, it will be created
+        If the directory does not exist, it will be created else it will be cleared
     :param dist_dir_path: Path to the dist directory.
         If the directory does not exist, it will be created
     """
+    import shutil
+
     if not plugin_path.exists():
         logger.error(f"Plugin path {plugin_path} does not exist")
         raise FileNotFoundError(f"Plugin path {plugin_path} does not exist")
@@ -48,8 +50,9 @@ def build_agent_plugin(
     if not build_dir_path.exists():
         logger.info(f"Creating build directory: {build_dir_path}")
         build_dir_path.mkdir(exist_ok=True)
-
-    import shutil
+    else:
+        logger.info(f"Clearing build directory: {build_dir_path}")
+        shutil.rmtree(build_dir_path)
 
     logger.info(f"Copying plugin code to build directory: {plugin_path} -> {build_dir_path}")
     shutil.copytree(plugin_path, build_dir_path, dirs_exist_ok=True)

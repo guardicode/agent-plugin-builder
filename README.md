@@ -24,6 +24,7 @@ where:
         PLUGIN_PATH: The path where you have the Agent Plugin code. `
     Optional:
         -b/--build-dir-path: The path where all needed build artifacts will be stored.
+        If the directory is not empty, it will delete it using shutil.rmtree
         Default: <current_working_directory>/build
 
         -d/--dist-dir-path: The path where resulting Agent Plugin archive will be stored.
