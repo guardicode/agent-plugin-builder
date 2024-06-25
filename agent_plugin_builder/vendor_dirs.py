@@ -136,8 +136,10 @@ def generate_requirements_file(build_dir: Path):
     logger.info("Generating requirements file")
     if (build_dir / "poetry.lock").exists():
         command = ["poetry", "export", "-f", "requirements.txt", "-o", "requirements.txt"]
-        process = subprocess.Popen(command, cwd=str(build_dir), stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        with process.stdout as stdout:
+        process = subprocess.Popen(
+            command, cwd=str(build_dir), stdout=subprocess.PIPE, stderr=subprocess.STDOUT
+        )
+        with process.stdout as stdout:  # type: ignore [union-attr]
             for line in iter(stdout.readline, b""):
                 logger.debug(line)
 
@@ -147,8 +149,10 @@ def generate_requirements_file(build_dir: Path):
     elif (build_dir / "Pipfile.lock").exists():
         command = ["pipenv", "requirements"]
         with (build_dir / "requirements.txt").open("w") as f:
-            process = subprocess.Popen(command, cwd=str(build_dir), stdout=f, stderr=subprocess.PIPE)
-            with process.stderr as stderr:
+            process = subprocess.Popen(
+                command, cwd=str(build_dir), stdout=f, stderr=subprocess.PIPE
+            )
+            with process.stderr as stderr:  # type: ignore [union-attr]
                 for line in iter(stderr.readline, b""):
                     logger.debug(line)
 
