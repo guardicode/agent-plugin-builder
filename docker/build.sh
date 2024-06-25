@@ -9,6 +9,7 @@ docker build --platform linux/amd64 -t $WINE_DOCKER_TAG --build-arg WINE_FLAVOUR
 
 cd "$SCRIPT_DIR"/pywine || exit
 sed "s|FROM tobix/wine:devel|FROM $WINE_DOCKER_TAG|" Dockerfile > Dockerfile.modified
+cmp --silent Dockerfile Dockerfile.modified && echo "Error: Failed to generate the dockerfile for pywine" && exit
 docker build --platform linux/amd64 -t $PYWINE_TAG --build-arg PYTHON_VERSION=3.11.9 -f Dockerfile.modified .
 rm Dockerfile.modified
 
