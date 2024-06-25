@@ -214,7 +214,7 @@ def create_plugin_archive(
 
     plugin_archive = (
         dist_dir_path
-        / f"{agent_plugin_manifest.name}_{agent_plugin_manifest.plugin_type.value.lower()}.tar"
+        / f"{agent_plugin_manifest.name}-{agent_plugin_manifest.plugin_type.value.lower()}.tar"
     )
     if plugin_archive.exists():
         logger.info(f"Removing existing plugin archive: {plugin_archive}")
