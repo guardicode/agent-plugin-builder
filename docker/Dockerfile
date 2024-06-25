@@ -1,6 +1,6 @@
 # NOTE: pywine wine prefix location is stored in the WINEPREFIX env variable
 # NOTE: It also installs the wine prefix with 777 permissions
-FROM pywine:3.11
+FROM infectionmonkey/pywine:3.11
 
 # Install git into the wine prefix
 RUN cd /tmp && \
