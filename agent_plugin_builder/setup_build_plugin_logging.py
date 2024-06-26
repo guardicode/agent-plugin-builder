@@ -30,11 +30,11 @@ def setup_logging(data_dir: Path, verbosity: int):
     logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)
 
-    log_file_path = _get_log_file_path(data_dir)
-
-    _add_file_handler(logger, logging.Formatter(FILE_FORMAT), log_file_path)
-
     _add_console_handler(logger, logging.Formatter(CONSOLE_FORMAT), verbosity)
+
+    log_file_path = _get_log_file_path(data_dir)
+    logger.info(f"Writing log file to {log_file_path}")
+    _add_file_handler(logger, logging.Formatter(FILE_FORMAT), log_file_path)
 
 
 def _get_log_file_path(data_dir: Path) -> Path:
