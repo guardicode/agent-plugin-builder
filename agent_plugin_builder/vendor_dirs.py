@@ -65,27 +65,17 @@ def check_if_common_vendor_dir_possible(build_dir: Path, uid: int, gid: int) -> 
     """
     generate_requirements_file(build_dir)
 
-    client = docker.from_env()
-
-    linux_container = client.containers.run(
-        AGENT_PLUGIN_IMAGE,
-        command=_build_bash_command(
-            LINUX_BUILD_PACKAGE_LIST_COMMANDS.format(uid=quote(str(uid)), gid=quote(str(gid)))
-        ),
-        volumes={build_dir: {"bind": "/plugin", "mode": "rw"}},
-        remove=True,
+    command = _build_bash_command(
+        LINUX_BUILD_PACKAGE_LIST_COMMANDS.format(uid=quote(str(uid)), gid=quote(str(gid)))
     )
+    linux_container = _run_container_with_plugin_dir(AGENT_PLUGIN_IMAGE, command, build_dir)
     logger.debug(f"Linux container logs: {linux_container}")
     _log_container_output(linux_container, "Linux Dry Run requirements, ")
 
-    windows_container = client.containers.run(
-        PLUGIN_BUILDER_IMAGE,
-        command=_build_bash_command(
-            WINDOWS_BUILD_PACKAGE_LIST_COMMANDS.format(uid=quote(str(uid)), gid=quote(str(gid)))
-        ),
-        volumes={build_dir: {"bind": "/plugin", "mode": "rw"}},
-        remove=True,
+    command = _build_bash_command(
+        WINDOWS_BUILD_PACKAGE_LIST_COMMANDS.format(uid=quote(str(uid)), gid=quote(str(gid)))
     )
+    windows_container = _run_container_with_plugin_dir(PLUGIN_BUILDER_IMAGE, command, build_dir)
     _log_container_output(windows_container, "Windows Dry Run requirements, ")
 
     linux_packages_path = build_dir / "linux.json"
@@ -110,6 +100,16 @@ def _build_bash_command(command: str) -> str:
     return f"/bin/bash -c {quote(command)}"
 
 
+def _run_container_with_plugin_dir(image: str, command: str, plugin_dir: Path):
+    """
+    Run a container with the plugin directory mounted.
+    """
+
+    client = docker.from_env()
+    volumes = {str(plugin_dir): {"bind": "/plugin", "mode": "rw"}}
+    return client.containers.run(image, command=command, volumes=volumes, remove=True)
+
+
 def generate_common_vendor_dir(build_dir: Path, uid: int, gid: int):
     """
     Generate a common vendor directory by installing the requirements in a Linux container.
@@ -118,18 +118,12 @@ def generate_common_vendor_dir(build_dir: Path, uid: int, gid: int):
     :param uid: User ID to set on the vendor directory.
     :param gid: Group ID to set on the vendor directory.
     """
-    client = docker.from_env()
-
-    linux_container = client.containers.run(
-        AGENT_PLUGIN_IMAGE,
-        command=_build_bash_command(
-            LINUX_BUILD_VENDOR_DIR_COMMANDS.format(
-                uid=quote(str(uid)), gid=quote(str(gid)), vendor_dir=quote("vendor")
-            )
-        ),
-        volumes={str(build_dir): {"bind": "/plugin", "mode": "rw"}},
-        remove=True,
+    command = _build_bash_command(
+        LINUX_BUILD_VENDOR_DIR_COMMANDS.format(
+            uid=quote(str(uid)), gid=quote(str(gid)), vendor_dir=quote("vendor")
+        )
     )
+    linux_container = _run_container_with_plugin_dir(AGENT_PLUGIN_IMAGE, command, build_dir)
     _log_container_output(linux_container, "Common vendor directory, ")
 
 
@@ -156,17 +150,12 @@ def generate_linux_vendor_dir(build_dir: Path, uid: int, gid: int):
     :param uid: User ID to set on the vendor directory.
     :param gid: Group ID to set on the vendor directory.
     """
-    client = docker.from_env()
-    linux_container = client.containers.run(
-        AGENT_PLUGIN_IMAGE,
-        command=_build_bash_command(
-            LINUX_BUILD_VENDOR_DIR_COMMANDS.format(
-                uid=quote(str(uid)), gid=quote(str(gid)), vendor_dir=quote("vendor-linux")
-            )
-        ),
-        volumes={build_dir: {"bind": "/plugin", "mode": "rw"}},
-        remove=True,
+    command = _build_bash_command(
+        LINUX_BUILD_VENDOR_DIR_COMMANDS.format(
+            uid=quote(str(uid)), gid=quote(str(gid)), vendor_dir=quote("vendor-linux")
+        )
     )
+    linux_container = _run_container_with_plugin_dir(AGENT_PLUGIN_IMAGE, command, build_dir)
     _log_container_output(linux_container, "Linux vendor directory, ")
 
 
@@ -179,16 +168,10 @@ def generate_windows_vendor_dir(build_dir: Path, uid: int, gid: int):
     :param uid: User ID to set on the vendor directory.
     :param gid: Group ID to set on the vendor directory.
     """
-    client = docker.from_env()
-
-    windows_container = client.containers.run(
-        PLUGIN_BUILDER_IMAGE,
-        command=_build_bash_command(
-            WINDOWS_BUILD_VENDOR_DIR_COMMANDS.format(uid=quote(str(uid)), gid=quote(str(gid)))
-        ),
-        volumes={build_dir: {"bind": "/plugin", "mode": "rw"}},
-        remove=True,
+    command = _build_bash_command(
+        WINDOWS_BUILD_VENDOR_DIR_COMMANDS.format(uid=quote(str(uid)), gid=quote(str(gid)))
     )
+    windows_container = _run_container_with_plugin_dir(PLUGIN_BUILDER_IMAGE, command, build_dir)
     _log_container_output(windows_container, "Windows vendor directory, ")
 
 
