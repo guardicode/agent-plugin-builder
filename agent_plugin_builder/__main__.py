@@ -1,5 +1,5 @@
 import sys
 
-from . import build_plugin
+from .agent_plugin_builder import main
 
-sys.exit(build_plugin.main())
+sys.exit(main())
