@@ -1,11 +1,14 @@
 import logging
 from argparse import ArgumentParser
-from contextlib import suppress
 from pathlib import Path
 from tempfile import mkdtemp
 
 from .build_plugin import BUILD, DIST, build_agent_plugin
-from .setup_build_plugin_logging import reset_logger, setup_logging, AGENT_PLUGIN_BUILDER_LOG_FILENAME
+from .setup_build_plugin_logging import (
+    AGENT_PLUGIN_BUILDER_LOG_FILENAME,
+    reset_logger,
+    setup_logging,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -43,11 +46,14 @@ def main():
     _temp_log_dir = Path(mkdtemp())
     _setup_logging(_temp_log_dir, args.verbosity)
     _log_arguments(args)
-    with suppress(Exception):
+    try:
         build_agent_plugin(args.plugin_path, args.build_dir_path, args.dist_dir_path)
+    except Exception as e:
+        logger.error(f"Error building plugin: {e}", exc_info=True)
 
     logger.info(f"Copying log file to {args.build_dir_path}")
     import shutil
+
     shutil.copy(_temp_log_dir / AGENT_PLUGIN_BUILDER_LOG_FILENAME, args.build_dir_path)
 
 
