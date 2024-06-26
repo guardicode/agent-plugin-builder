@@ -1,20 +1,57 @@
 import logging
 from pathlib import Path
+from shlex import quote
+from typing import Final
+
+from monkeytypes import OperatingSystem
 
 import docker
-from monkeytypes import OperatingSystem
 
 from .compare_package_lists import all_equal, load_package_names
 
 logger = logging.getLogger(__name__)
 
-AGENT_PLUGIN_IMAGE = "infectionmonkey/agent-builder:latest"
-PLUGIN_BUILDER_IMAGE = "infectionmonkey/plugin-builder:latest"
-LINUX_IMAGE_PYENV_INIT_COMMANDS = [
+
+AGENT_PLUGIN_IMAGE: Final = "infectionmonkey/agent-builder:latest"
+PLUGIN_BUILDER_IMAGE: Final = "infectionmonkey/plugin-builder:latest"
+LINUX_IMAGE_PYENV_INIT_COMMANDS: Final = [
     'export PYENV_ROOT="$HOME/.pyenv"',
     'command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"',
     'eval "$(pyenv init -)"',
 ]
+LINUX_BUILD_PACKAGE_LIST_COMMANDS: Final = " && ".join(
+    [
+        *LINUX_IMAGE_PYENV_INIT_COMMANDS,
+        "cd /plugin",
+        "pip install --dry-run -r requirements.txt --report linux.json",
+        "chown {uid}:{gid} /plugin/linux.json",
+    ]
+)
+LINUX_BUILD_VENDOR_DIR_COMMANDS: Final = " && ".join(
+    [
+        *LINUX_IMAGE_PYENV_INIT_COMMANDS,
+        "cd /plugin",
+        "pip install -r requirements.txt -t src/{vendor_dir}",
+        "chown -R {uid}:{gid} /plugin/src/{vendor_dir}",
+    ]
+)
+WINDOWS_IMAGE_INIT_COMMAND: Final = ". /opt/mkuserwineprefix"
+WINDOWS_BUILD_PACKAGE_LIST_COMMANDS: Final = " && ".join(
+    [
+        WINDOWS_IMAGE_INIT_COMMAND,
+        "cd /plugin",
+        "wine pip install --dry-run -r requirements.txt --report windows.json",
+        "chown {uid}:{gid} /plugin/windows.json",
+    ]
+)
+WINDOWS_BUILD_VENDOR_DIR_COMMANDS: Final = " && ".join(
+    [
+        WINDOWS_IMAGE_INIT_COMMAND,
+        "cd /plugin",
+        "wine pip install -r requirements.txt -t src/vendor-windows",
+        "chown -R {uid}:{gid} /plugin/src/vendor-windows",
+    ]
+)
 
 
 def check_if_common_vendor_dir_possible(build_dir: Path, uid: int, gid: int) -> bool:
@@ -29,33 +66,27 @@ def check_if_common_vendor_dir_possible(build_dir: Path, uid: int, gid: int) -> 
     generate_requirements_file(build_dir)
 
     client = docker.from_env()
-    linux_commands = LINUX_IMAGE_PYENV_INIT_COMMANDS + [
-        "cd /plugin && pip install --dry-run -r requirements.txt --report linux.json",
-        f"chown -R {uid}:{gid} /plugin/linux.json",
-    ]
-    windows_commands = (
-        ". /opt/mkuserwineprefix && "
-        "cd /plugin && wine pip install --dry-run -r requirements.txt --report "
-        f"windows.json && chown {uid}:{gid} /plugin/windows.json"
-    )
 
-    full_linux_command = "/bin/bash -c '" + " && ".join(linux_commands) + "'"
     linux_container = client.containers.run(
         AGENT_PLUGIN_IMAGE,
-        command=full_linux_command,
+        command=_build_bash_command(
+            LINUX_BUILD_PACKAGE_LIST_COMMANDS.format(uid=quote(str(uid)), gid=quote(str(gid)))
+        ),
         volumes={build_dir: {"bind": "/plugin", "mode": "rw"}},
         remove=True,
     )
     logger.debug(f"Linux container logs: {linux_container}")
-    _log_container_output(linux_container, "Linux Dry Run requiremenets, ")
+    _log_container_output(linux_container, "Linux Dry Run requirements, ")
 
     windows_container = client.containers.run(
         PLUGIN_BUILDER_IMAGE,
-        command=f'/bin/bash -c "{windows_commands}"',
+        command=_build_bash_command(
+            WINDOWS_BUILD_PACKAGE_LIST_COMMANDS.format(uid=quote(str(uid)), gid=quote(str(gid)))
+        ),
         volumes={build_dir: {"bind": "/plugin", "mode": "rw"}},
         remove=True,
     )
-    _log_container_output(windows_container, "Windows Dry Run requiremenets, ")
+    _log_container_output(windows_container, "Windows Dry Run requirements, ")
 
     linux_packages_path = build_dir / "linux.json"
     windows_packages_path = build_dir / "windows.json"
@@ -75,6 +106,10 @@ def check_if_common_vendor_dir_possible(build_dir: Path, uid: int, gid: int) -> 
     return response
 
 
+def _build_bash_command(command: str) -> str:
+    return f"/bin/bash -c {quote(command)}"
+
+
 def generate_common_vendor_dir(build_dir: Path, uid: int, gid: int):
     """
     Generate a common vendor directory by installing the requirements in a Linux container.
@@ -84,16 +119,14 @@ def generate_common_vendor_dir(build_dir: Path, uid: int, gid: int):
     :param gid: Group ID to set on the vendor directory.
     """
     client = docker.from_env()
-    commands = LINUX_IMAGE_PYENV_INIT_COMMANDS + [
-        "cd /plugin && pip install -r requirements.txt -t src/vendor",
-        f"chown -R {uid}:{gid} /plugin/src/vendor",
-    ]
-
-    full_command = "/bin/bash -c '" + " && ".join(commands) + "'"
 
     linux_container = client.containers.run(
         AGENT_PLUGIN_IMAGE,
-        command=full_command,
+        command=_build_bash_command(
+            LINUX_BUILD_VENDOR_DIR_COMMANDS.format(
+                uid=quote(str(uid)), gid=quote(str(gid)), vendor_dir=quote("vendor")
+            )
+        ),
         volumes={str(build_dir): {"bind": "/plugin", "mode": "rw"}},
         remove=True,
     )
@@ -124,15 +157,13 @@ def generate_linux_vendor_dir(build_dir: Path, uid: int, gid: int):
     :param gid: Group ID to set on the vendor directory.
     """
     client = docker.from_env()
-    commands = LINUX_IMAGE_PYENV_INIT_COMMANDS + [
-        "cd /plugin && pip install -r requirements.txt -t src/vendor-linux",
-        f"chown -R {uid}:{gid} /plugin/src/vendor-linux",
-    ]
-
-    full_command = "/bin/bash -c '" + " && ".join(commands) + "'"
     linux_container = client.containers.run(
         AGENT_PLUGIN_IMAGE,
-        command=full_command,
+        command=_build_bash_command(
+            LINUX_BUILD_VENDOR_DIR_COMMANDS.format(
+                uid=quote(str(uid)), gid=quote(str(gid)), vendor_dir=quote("vendor-linux")
+            )
+        ),
         volumes={build_dir: {"bind": "/plugin", "mode": "rw"}},
         remove=True,
     )
@@ -149,15 +180,12 @@ def generate_windows_vendor_dir(build_dir: Path, uid: int, gid: int):
     :param gid: Group ID to set on the vendor directory.
     """
     client = docker.from_env()
-    commands = (
-        ". /opt/mkuserwineprefix && "
-        f"cd /plugin && wine pip install -r requirements.txt -t src/vendor-windows && "
-        f"chown -R {uid}:{gid} /plugin/src/vendor-windows"
-    )
 
     windows_container = client.containers.run(
         PLUGIN_BUILDER_IMAGE,
-        command=f'/bin/bash -c "{commands}"',
+        command=_build_bash_command(
+            WINDOWS_BUILD_VENDOR_DIR_COMMANDS.format(uid=quote(str(uid)), gid=quote(str(gid)))
+        ),
         volumes={build_dir: {"bind": "/plugin", "mode": "rw"}},
         remove=True,
     )
