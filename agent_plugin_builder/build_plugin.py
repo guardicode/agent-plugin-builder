@@ -110,10 +110,11 @@ def generate_vendor_directories(
     dependency_method: PlatformDependencyPackagingMethod,
 ):
     """
-    Generate the vendor directories for the plugin. If the dependency method is not chosen
-    or if the plugin supports multiple operating systems, the method will try to generate
-    common vendor directories. If common vendor directory are not possible, it will generate
-    separate vendor directories for each supported operating system.
+    Generate the vendor directories for the plugin.
+
+    If the plugin supports multiple operating systems and the dependency_method is AUTODETECT, the
+    function will try to generate a common vendor directory. If a common vendor directory is not
+    possible, it will generate separate vendor directories for each supported operating system.
 
     :param build_dir_path: Path to the build directory.
     :param agent_plugin_manifest: Agent Plugin manifest.
