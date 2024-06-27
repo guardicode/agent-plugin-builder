@@ -49,13 +49,8 @@ def parse_agent_plugin_build_options(plugin_path: Path) -> AgentPluginBuildOptio
         build_config_file_path = plugin_path / "build.yml"
 
     if not build_config_file_path.exists():
-        logger.info(
-            "Build options not found, using default dependency method: "
-            f"{PlatformDependencyPackagingMethod.SEPARATE}"
-        )
-        return AgentPluginBuildOptions(
-            platform_dependencies=PlatformDependencyPackagingMethod.SEPARATE
-        )
+        logger.info("Build options not found, using defaults.")
+        return AgentPluginBuildOptions()
 
     logger.info(f"Using build options from {build_config_file_path}")
     with build_config_file_path.open("r") as f:
