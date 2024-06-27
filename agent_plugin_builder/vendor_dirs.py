@@ -208,19 +208,6 @@ def generate_requirements_file(build_dir: Path):
         return_code = process.wait()
         if return_code != 0:
             raise subprocess.CalledProcessError(return_code, command)
-    elif (build_dir / "Pipfile.lock").exists():
-        command = ["pipenv", "requirements"]
-        with (build_dir / "requirements.txt").open("w") as f:
-            process = subprocess.Popen(
-                command, cwd=str(build_dir), stdout=f, stderr=subprocess.PIPE
-            )
-            with process.stderr as stderr:  # type: ignore [union-attr]
-                for line in iter(stderr.readline, b""):
-                    logger.debug(line)
-
-        return_code = process.wait()
-        if return_code != 0:
-            raise subprocess.CalledProcessError(return_code, command)
 
     if (build_dir / "requirements.txt").exists():
         logger.info("Requirements file generated")
