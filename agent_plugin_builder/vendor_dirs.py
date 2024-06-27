@@ -69,7 +69,6 @@ def check_if_common_vendor_dir_possible(build_dir: Path, uid: int, gid: int) -> 
         LINUX_BUILD_PACKAGE_LIST_COMMANDS.format(uid=quote(str(uid)), gid=quote(str(gid)))
     )
     linux_container = _run_container_with_plugin_dir(AGENT_PLUGIN_IMAGE, command, build_dir)
-    logger.debug(f"Linux container logs: {linux_container}")
     _log_container_output(linux_container, "Linux Dry Run requirements, ")
 
     command = _build_bash_command(
@@ -100,12 +99,16 @@ def _build_bash_command(command: str) -> str:
     return f"/bin/bash -c {quote(command)}"
 
 
-def _run_container_with_plugin_dir(image: str, command: str, plugin_dir: Path):
+def _run_container_with_plugin_dir(image: str, command: str, plugin_dir: Path) -> bytes:
     """
     Run a container with the plugin directory mounted.
+
+    :param image: Docker image to run.
+    :param command: Command to run in the container.
+    :param plugin_dir: Path to the plugin directory.
     """
 
-    client = docker.from_env()
+    client = docker.from_env()  # type: ignore [attr-defined]
     volumes = {str(plugin_dir): {"bind": "/plugin", "mode": "rw"}}
     return client.containers.run(image, command=command, volumes=volumes, remove=True)
 
