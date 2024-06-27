@@ -67,16 +67,14 @@ def check_if_common_vendor_dir_possible(build_dir: Path, uid: int, gid: int) -> 
     command = _build_bash_command(
         LINUX_BUILD_PACKAGE_LIST_COMMANDS.format(uid=quote(str(uid)), gid=quote(str(gid)))
     )
-    linux_container = _run_container_with_plugin_dir(LINUX_PLUGIN_BUILDER_IMAGE, command, build_dir)
-    _log_container_output(linux_container, "Linux Dry Run requirements, ")
+    output = _run_container_with_plugin_dir(LINUX_PLUGIN_BUILDER_IMAGE, command, build_dir)
+    _log_container_output(output, "Linux Requirements")
 
     command = _build_bash_command(
         WINDOWS_BUILD_PACKAGE_LIST_COMMANDS.format(uid=quote(str(uid)), gid=quote(str(gid)))
     )
-    windows_container = _run_container_with_plugin_dir(
-        WINDOWS_PLUGIN_BUILDER_IMAGE, command, build_dir
-    )
-    _log_container_output(windows_container, "Windows Dry Run requirements, ")
+    output = _run_container_with_plugin_dir(WINDOWS_PLUGIN_BUILDER_IMAGE, command, build_dir)
+    _log_container_output(output, "Windows Requirements")
 
     linux_packages_path = build_dir / "linux.json"
     windows_packages_path = build_dir / "windows.json"
@@ -133,8 +131,8 @@ def generate_common_vendor_dir(build_dir: Path, uid: int, gid: int):
             uid=quote(str(uid)), gid=quote(str(gid)), vendor_dir=quote("vendor")
         )
     )
-    linux_container = _run_container_with_plugin_dir(LINUX_PLUGIN_BUILDER_IMAGE, command, build_dir)
-    _log_container_output(linux_container, "Common vendor directory, ")
+    output = _run_container_with_plugin_dir(LINUX_PLUGIN_BUILDER_IMAGE, command, build_dir)
+    _log_container_output(output, "Common Vendor Directory")
 
 
 def generate_vendor_dirs(build_dir: Path, operating_system: OperatingSystem, uid: int, gid: int):
@@ -165,8 +163,8 @@ def generate_linux_vendor_dir(build_dir: Path, uid: int, gid: int):
             uid=quote(str(uid)), gid=quote(str(gid)), vendor_dir=quote("vendor-linux")
         )
     )
-    linux_container = _run_container_with_plugin_dir(LINUX_PLUGIN_BUILDER_IMAGE, command, build_dir)
-    _log_container_output(linux_container, "Linux vendor directory, ")
+    output = _run_container_with_plugin_dir(LINUX_PLUGIN_BUILDER_IMAGE, command, build_dir)
+    _log_container_output(output, "Linux Vendor directory")
 
 
 def generate_windows_vendor_dir(build_dir: Path, uid: int, gid: int):
@@ -181,14 +179,12 @@ def generate_windows_vendor_dir(build_dir: Path, uid: int, gid: int):
     command = _build_bash_command(
         WINDOWS_BUILD_VENDOR_DIR_COMMANDS.format(uid=quote(str(uid)), gid=quote(str(gid)))
     )
-    windows_container = _run_container_with_plugin_dir(
-        WINDOWS_PLUGIN_BUILDER_IMAGE, command, build_dir
-    )
-    _log_container_output(windows_container, "Windows vendor directory, ")
+    output = _run_container_with_plugin_dir(WINDOWS_PLUGIN_BUILDER_IMAGE, command, build_dir)
+    _log_container_output(output, "Windows Vendor Directory")
 
 
 def _log_container_output(container_logs: bytes, prefix: str = ""):
-    logger.debug(f"{prefix}Container logs: {container_logs.decode('utf-8')}")
+    logger.debug(f"{prefix} Container logs: {container_logs.decode('utf-8')}")
 
 
 def generate_requirements_file(build_dir: Path):
