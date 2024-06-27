@@ -1,3 +1,4 @@
+import json
 import logging
 from pathlib import Path
 from shlex import quote
@@ -6,8 +7,6 @@ from typing import Final
 from monkeytypes import OperatingSystem
 
 import docker
-
-from .compare_package_lists import all_equal, load_package_names
 
 logger = logging.getLogger(__name__)
 
@@ -86,13 +85,19 @@ def check_if_common_vendor_dir_possible(build_dir: Path, uid: int, gid: int) -> 
     linux_packages_path.unlink()
     windows_packages_path.unlink()
 
-    response = all_equal([linux_packages, windows_packages])
+    response = linux_packages == windows_packages
     if response:
         logger.info("Common vendor directory is possible")
     else:
         logger.info("Common vendor directory is not possible")
 
     return response
+
+
+def load_package_names(file_path: Path) -> set[str]:
+    with file_path.open("r") as f:
+        packages_dict = json.load(f)
+        return {p["download_info"]["url"].split("/")[-1] for p in packages_dict["install"]}
 
 
 def _build_bash_command(command: str) -> str:
