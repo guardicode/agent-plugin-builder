@@ -32,8 +32,8 @@ def build_agent_plugin(
     dist_dir_path: Path,
 ):
     """
-    Build the agent plugin by copying the plugin code to the build directory,
-    generating the Agent Plugin archive.
+    Build the agent plugin by copying the plugin code to the build directory and generating the
+    Agent Plugin archive.
 
     :param plugin_path: Path to the plugin code.
         If the directory does not exist, an error will be raised
@@ -41,6 +41,8 @@ def build_agent_plugin(
         If the directory does not exist, it will be created else it will be cleared
     :param dist_dir_path: Path to the dist directory.
         If the directory does not exist, it will be created
+    :raises FileNotFoundError: If the plugin path does not exist.
+    :raises shutil.Error: If there is an error preparing the build directory.
     """
 
     if not plugin_path.exists():
