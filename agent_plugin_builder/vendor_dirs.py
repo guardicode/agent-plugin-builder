@@ -11,8 +11,8 @@ import docker
 logger = logging.getLogger(__name__)
 
 
-AGENT_PLUGIN_IMAGE: Final = "infectionmonkey/agent-builder:latest"
-PLUGIN_BUILDER_IMAGE: Final = "infectionmonkey/plugin-builder:latest"
+LINUX_PLUGIN_BUILDER_IMAGE: Final = "infectionmonkey/agent-builder:latest"
+WINDOWS_PLUGIN_BUILDER_IMAGE: Final = "infectionmonkey/plugin-builder:latest"
 LINUX_IMAGE_PYENV_INIT_COMMANDS: Final = [
     'export PYENV_ROOT="$HOME/.pyenv"',
     'command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"',
@@ -67,13 +67,15 @@ def check_if_common_vendor_dir_possible(build_dir: Path, uid: int, gid: int) -> 
     command = _build_bash_command(
         LINUX_BUILD_PACKAGE_LIST_COMMANDS.format(uid=quote(str(uid)), gid=quote(str(gid)))
     )
-    linux_container = _run_container_with_plugin_dir(AGENT_PLUGIN_IMAGE, command, build_dir)
+    linux_container = _run_container_with_plugin_dir(LINUX_PLUGIN_BUILDER_IMAGE, command, build_dir)
     _log_container_output(linux_container, "Linux Dry Run requirements, ")
 
     command = _build_bash_command(
         WINDOWS_BUILD_PACKAGE_LIST_COMMANDS.format(uid=quote(str(uid)), gid=quote(str(gid)))
     )
-    windows_container = _run_container_with_plugin_dir(PLUGIN_BUILDER_IMAGE, command, build_dir)
+    windows_container = _run_container_with_plugin_dir(
+        WINDOWS_PLUGIN_BUILDER_IMAGE, command, build_dir
+    )
     _log_container_output(windows_container, "Windows Dry Run requirements, ")
 
     linux_packages_path = build_dir / "linux.json"
@@ -131,7 +133,7 @@ def generate_common_vendor_dir(build_dir: Path, uid: int, gid: int):
             uid=quote(str(uid)), gid=quote(str(gid)), vendor_dir=quote("vendor")
         )
     )
-    linux_container = _run_container_with_plugin_dir(AGENT_PLUGIN_IMAGE, command, build_dir)
+    linux_container = _run_container_with_plugin_dir(LINUX_PLUGIN_BUILDER_IMAGE, command, build_dir)
     _log_container_output(linux_container, "Common vendor directory, ")
 
 
@@ -163,7 +165,7 @@ def generate_linux_vendor_dir(build_dir: Path, uid: int, gid: int):
             uid=quote(str(uid)), gid=quote(str(gid)), vendor_dir=quote("vendor-linux")
         )
     )
-    linux_container = _run_container_with_plugin_dir(AGENT_PLUGIN_IMAGE, command, build_dir)
+    linux_container = _run_container_with_plugin_dir(LINUX_PLUGIN_BUILDER_IMAGE, command, build_dir)
     _log_container_output(linux_container, "Linux vendor directory, ")
 
 
@@ -179,7 +181,9 @@ def generate_windows_vendor_dir(build_dir: Path, uid: int, gid: int):
     command = _build_bash_command(
         WINDOWS_BUILD_VENDOR_DIR_COMMANDS.format(uid=quote(str(uid)), gid=quote(str(gid)))
     )
-    windows_container = _run_container_with_plugin_dir(PLUGIN_BUILDER_IMAGE, command, build_dir)
+    windows_container = _run_container_with_plugin_dir(
+        WINDOWS_PLUGIN_BUILDER_IMAGE, command, build_dir
+    )
     _log_container_output(windows_container, "Windows vendor directory, ")
 
 
