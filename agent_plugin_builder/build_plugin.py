@@ -76,6 +76,8 @@ def get_agent_plugin_manifest(build_dir_path: Path) -> AgentPluginManifest:
     Get the Agent Plugin manifest from the build directory.
 
     :param build_dir_path: Path to the build directory.
+    :raises FileNotFoundError: If the manifest file does not exist.
+    :raises yaml.YAMLError: If the manifest file is not a valid YAML file.
     """
     manifest_file_path = _get_plugin_manifest_filename(build_dir_path)
 
