@@ -1,14 +1,9 @@
 import logging
 from argparse import ArgumentParser
 from pathlib import Path
-from tempfile import mkdtemp
 
 from .build_plugin import BUILD, DIST, build_agent_plugin
-from .setup_build_plugin_logging import (
-    AGENT_PLUGIN_BUILDER_LOG_FILENAME,
-    reset_logger,
-    setup_logging,
-)
+from .setup_build_plugin_logging import add_file_handler, reset_logger, setup_logging
 
 logger = logging.getLogger(__name__)
 
@@ -43,18 +38,17 @@ def main():
         "DEBUG=5. Default(0 or more than 5 occurrences)  level: INFO.",
     )
     args = parser.parse_args()
-    _temp_log_dir = Path(mkdtemp())
-    _setup_logging(_temp_log_dir, args.verbosity)
+    _setup_logging(args.verbosity)
     _log_arguments(args)
     try:
-        build_agent_plugin(args.plugin_path, args.build_dir_path, args.dist_dir_path)
+        build_agent_plugin(
+            args.plugin_path,
+            args.build_dir_path,
+            args.dist_dir_path,
+            on_build_dir_created=lambda dir: add_file_handler(dir),
+        )
     except Exception as e:
         logger.error(f"Error building plugin: {e}", exc_info=True)
-
-    logger.info(f"Copying log file to {args.build_dir_path}")
-    import shutil
-
-    shutil.copy(_temp_log_dir / AGENT_PLUGIN_BUILDER_LOG_FILENAME, args.build_dir_path)
 
 
 def _log_arguments(args):
@@ -62,6 +56,6 @@ def _log_arguments(args):
     logger.info(f"Agent Plugin Builder started with arguments: {arg_string}")
 
 
-def _setup_logging(build_dir_path: Path, verbosity):
+def _setup_logging(verbosity):
     reset_logger()
-    setup_logging(build_dir_path, verbosity)
+    setup_logging(verbosity)

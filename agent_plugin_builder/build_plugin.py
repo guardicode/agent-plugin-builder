@@ -4,6 +4,7 @@ import shutil
 import tarfile
 from importlib import import_module
 from pathlib import Path
+from typing import Callable
 
 import yaml
 from monkeytypes import AgentPluginManifest
@@ -30,6 +31,7 @@ def build_agent_plugin(
     plugin_path: Path,
     build_dir_path: Path,
     dist_dir_path: Path,
+    on_build_dir_created: Callable[[Path], None] | None = None,
 ):
     """
     Build the agent plugin by copying the plugin code to the build directory and generating the
@@ -41,6 +43,8 @@ def build_agent_plugin(
         If the directory does not exist, it will be created else it will be cleared
     :param dist_dir_path: Path to the dist directory.
         If the directory does not exist, it will be created
+    :param on_build_dir_created: Callback function to be called after the build directory is
+        created. The function will be called with the build directory path as an argument.
     :raises FileNotFoundError: If the plugin path does not exist.
     :raises shutil.Error: If there is an error preparing the build directory.
     """
@@ -65,6 +69,9 @@ def build_agent_plugin(
             f"Unable to copy plugin code to build directory: {plugin_path} -> {build_dir_path}"
         )
         raise err
+
+    if on_build_dir_created:
+        on_build_dir_created(build_dir_path)
 
     agent_plugin_manifest = get_agent_plugin_manifest(build_dir_path)
     create_agent_plugin_archive(build_dir_path, agent_plugin_manifest, dist_dir_path)

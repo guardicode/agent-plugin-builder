@@ -18,7 +18,7 @@ LOG_LEVELS = {
 }
 
 
-def setup_logging(data_dir: Path, verbosity: int):
+def setup_logging(verbosity: int):
     """
     Set up the logger
 
@@ -32,7 +32,16 @@ def setup_logging(data_dir: Path, verbosity: int):
 
     _add_console_handler(logger, logging.Formatter(CONSOLE_FORMAT), verbosity)
 
-    log_file_path = _get_log_file_path(data_dir)
+
+def add_file_handler(dir: Path):
+    """
+    Add a file handler to the logger
+
+    :param dir: The directory in which to write the log file
+    """
+
+    logger = logging.getLogger()
+    log_file_path = _get_log_file_path(dir)
     logger.info(f"Writing log file to {log_file_path}")
     _add_file_handler(logger, logging.Formatter(FILE_FORMAT), log_file_path)
 
