@@ -232,10 +232,7 @@ def create_plugin_archive(
         logger.info(f"Creating dist directory: {dist_dir_path}")
         dist_dir_path.mkdir(exist_ok=True)
 
-    plugin_archive = (
-        dist_dir_path
-        / f"{agent_plugin_manifest.name}-{agent_plugin_manifest.plugin_type.value.lower()}.tar"
-    )
+    plugin_archive = dist_dir_path / _get_plugin_archive_name(agent_plugin_manifest)
     if plugin_archive.exists():
         logger.info(f"Removing existing plugin archive: {plugin_archive}")
         plugin_archive.unlink()
@@ -251,6 +248,10 @@ def create_plugin_archive(
         tar.add(agent_plugin_manifest_file, arcname=agent_plugin_manifest_file.name)
 
     logger.info(f"Plugin archive created: {plugin_archive}")
+
+
+def _get_plugin_archive_name(agent_plugin_manifest: AgentPluginManifest) -> str:
+    return f"{agent_plugin_manifest.name}-{agent_plugin_manifest.plugin_type.value.lower()}.tar"
 
 
 def _get_plugin_manifest_filename(build_dir_path: Path) -> Path:
