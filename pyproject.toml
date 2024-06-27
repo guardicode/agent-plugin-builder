@@ -62,7 +62,6 @@ monkey-types = "^0.7.0"
 pyyaml = "^6.0.1"
 monkeyevents = "^0.4.0"
 pip = "^24.0"
-pipenv = "^2024.0.1"
 
 [tool.poetry.dev-dependencies]
 black = "24.3.0"
