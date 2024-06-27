@@ -1,5 +1,6 @@
 import json
 import logging
+import shutil
 import tarfile
 from importlib import import_module
 from pathlib import Path
@@ -41,16 +42,12 @@ def build_agent_plugin(
     :param dist_dir_path: Path to the dist directory.
         If the directory does not exist, it will be created
     """
-    import shutil
 
     if not plugin_path.exists():
         logger.error(f"Plugin path {plugin_path} does not exist")
         raise FileNotFoundError(f"Plugin path {plugin_path} does not exist")
 
-    if not build_dir_path.exists():
-        logger.info(f"Creating build directory: {build_dir_path}")
-        build_dir_path.mkdir(exist_ok=True)
-    else:
+    if build_dir_path.exists():
         try:
             logger.info(f"Clearing build directory: {build_dir_path}")
             shutil.rmtree(build_dir_path)
