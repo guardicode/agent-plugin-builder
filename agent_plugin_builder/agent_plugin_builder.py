@@ -2,6 +2,7 @@ import logging
 from argparse import ArgumentParser
 from pathlib import Path
 
+from .build_options import AgentPluginBuildOptions
 from .build_plugin import BUILD, DIST, build_agent_plugin
 from .setup_build_plugin_logging import add_file_handler, reset_logger, setup_logging
 
@@ -48,12 +49,13 @@ def main():
     args = parser.parse_args()
     _setup_logging(args.verbosity)
     _log_arguments(args)
+    cmdline_build_options = AgentPluginBuildOptions(source_dir=args.source_dir)
     try:
         build_agent_plugin(
             args.plugin_path,
             args.build_dir_path,
             args.dist_dir_path,
-            source_dirname=args.source_dir,
+            cmdline_build_options,
             on_build_dir_created=lambda dir: add_file_handler(dir),
         )
     except Exception as e:
