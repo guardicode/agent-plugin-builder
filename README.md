@@ -18,15 +18,16 @@ Install Agent Plugin Builder with `pip install .`
 After installation, if pip installed it somewhere in your `$PATH` Agent Plugin Builder
 can be started by simply invoking:
 
-    build_agent_plugin <PLUGIN_PATH> -b/--build-dir-path <BUILD_DIR_PATH> -d/--dist-dir-path <DIST_DIR_PATH> -v/--verbose
+    build_agent_plugin <PLUGIN_PATH>
 
 where:
 
     Required:
         PLUGIN_PATH: The path where you have the Agent Plugin code.
+
     Optional:
         -b/--build-dir-path: The path where all needed build artifacts will be stored.
-        If the directory is not empty, it will delete it using shutil.rmtree
+        If the directory is not empty, it will delete it using `shutil.rmtree`
         Default: <current_working_directory>/build
 
         -d/--dist-dir-path: The path where resulting Agent Plugin archive will be stored.
@@ -45,7 +46,7 @@ Alternatively one may use Agent Plugin Builder without installing it by
 cloning this repository and invoking:
 
     poetry install
-    poetry run build_agent_plugin <PLUGIN_PATH> -b/--build-dir-path <BUILD_DIR_PATH> -d/--dist-dir-path <DIST_DIR_PATH> -v/--verbose
+    poetry run build_agent_plugin <PLUGIN_PATH>
 
 ## Development
 
