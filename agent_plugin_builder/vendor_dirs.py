@@ -63,6 +63,7 @@ def check_if_common_vendor_dir_possible(build_dir: Path, uid: int, gid: int) -> 
     :param build_dir: Path to the build directory.
     :param uid: User ID to set on the vendor directory.
     :param gid: Group ID to set on the vendor directory.
+    :return: True if a common vendor directory is possible, False otherwise.
     """
     generate_requirements_file(build_dir)
 
@@ -95,6 +96,12 @@ def check_if_common_vendor_dir_possible(build_dir: Path, uid: int, gid: int) -> 
 
 
 def load_package_names(file_path: Path) -> set[str]:
+    """
+    Load the package names from a pip installation report file.
+
+    :param file_path: Path to the report file.
+    :return: Set of package names.
+    """
     with file_path.open("r") as f:
         packages_dict = json.load(f)
         return {p["download_info"]["url"].split("/")[-1] for p in packages_dict["install"]}
@@ -111,6 +118,7 @@ def _run_container_with_plugin_dir(image: str, command: str, plugin_dir: Path) -
     :param image: Docker image to run.
     :param command: Command to run in the container.
     :param plugin_dir: Path to the plugin directory.
+    :return: Output of the container.
     """
 
     client = docker.from_env()  # type: ignore [attr-defined]

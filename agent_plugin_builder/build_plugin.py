@@ -84,6 +84,7 @@ def get_agent_plugin_manifest(build_dir_path: Path) -> AgentPluginManifest:
     :param build_dir_path: Path to the build directory.
     :raises FileNotFoundError: If the manifest file does not exist.
     :raises yaml.YAMLError: If the manifest file is not a valid YAML file.
+    :return: The Agent Plugin manifest.
     """
     manifest_file_path = _get_plugin_manifest_filename(build_dir_path)
 
@@ -192,6 +193,7 @@ def create_source_archive(build_dir_path: Path) -> Path:
     Create the source archive for the plugin.
 
     :param build_dir_path: Path to the build directory.
+    :return: Path to the source archive.
     """
     source_archive = build_dir_path / f"{SOURCE}.tar.gz"
     source_build_dir_path = build_dir_path / "src"
@@ -228,6 +230,7 @@ def create_plugin_archive(
 
     :param build_dir_path: Path to the build directory.
     :param agent_plugin_manifest: Agent Plugin manifest.
+    :return: Path to the plugin archive.
     """
 
     plugin_archive = build_dir_path / _get_plugin_archive_name(agent_plugin_manifest)
