@@ -17,6 +17,13 @@ class PlatformDependencyPackagingMethod(Enum):
 
 
 class AgentPluginBuildOptions(InfectionMonkeyBaseModel):
+    source_dir: Annotated[
+        str,
+        Field(
+            title="The name of the source directory.",
+            default=None,
+        ),
+    ]
     platform_dependencies: Annotated[
         PlatformDependencyPackagingMethod,
         Field(
