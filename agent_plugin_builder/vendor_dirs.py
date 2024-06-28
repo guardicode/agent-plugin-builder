@@ -25,15 +25,15 @@ LINUX_BUILD_PACKAGE_LIST_COMMANDS: Final = " && ".join(
         *LINUX_IMAGE_PYENV_INIT_COMMANDS,
         "cd /plugin",
         "pip install --dry-run -r requirements.txt --report {filename}",
-        "chown {uid}:{gid} /plugin/{filename}",
+        "chown {uid}:{gid} {filename}",
     ]
 )
 LINUX_BUILD_VENDOR_DIR_COMMANDS: Final = " && ".join(
     [
         *LINUX_IMAGE_PYENV_INIT_COMMANDS,
         "cd /plugin",
-        "pip install -r requirements.txt -t {source_dirname}/{vendor_dir}",
-        "chown -R {uid}:{gid} /plugin/{source_dirname}/{vendor_dir}",
+        "pip install -r requirements.txt -t {vendor_path}",
+        "chown -R {uid}:{gid} {vendor_path}",
     ]
 )
 WINDOWS_IMAGE_INIT_COMMAND: Final = ". /opt/mkuserwineprefix"
@@ -42,7 +42,7 @@ WINDOWS_BUILD_PACKAGE_LIST_COMMANDS: Final = " && ".join(
         WINDOWS_IMAGE_INIT_COMMAND,
         "cd /plugin",
         "wine pip install --dry-run -r requirements.txt --report {filename}",
-        "chown {uid}:{gid} /plugin/{filename}",
+        "chown {uid}:{gid} {filename}",
     ]
 )
 WINDOWS_BUILD_VENDOR_DIR_COMMANDS: Final = " && ".join(
@@ -50,7 +50,7 @@ WINDOWS_BUILD_VENDOR_DIR_COMMANDS: Final = " && ".join(
         WINDOWS_IMAGE_INIT_COMMAND,
         "cd /plugin",
         "wine pip install -r requirements.txt -t {source_dirname}/vendor-windows",
-        "chown -R {uid}:{gid} /plugin/{source_dirname}/vendor-windows",
+        "chown -R {uid}:{gid} {source_dirname}/vendor-windows",
     ]
 )
 
@@ -139,8 +139,7 @@ def generate_common_vendor_dir(build_dir: Path, source_dirname: str, uid: int, g
         LINUX_BUILD_VENDOR_DIR_COMMANDS.format(
             uid=quote(str(uid)),
             gid=quote(str(gid)),
-            source_dirname=quote(source_dirname),
-            vendor_dir=quote("vendor"),
+            vendor_path=quote(f"{source_dirname}/vendor"),
         )
     )
     output = _run_container_with_plugin_dir(LINUX_PLUGIN_BUILDER_IMAGE, command, build_dir)
@@ -177,8 +176,7 @@ def generate_linux_vendor_dir(build_dir: Path, source_dirname: str, uid: int, gi
         LINUX_BUILD_VENDOR_DIR_COMMANDS.format(
             uid=quote(str(uid)),
             gid=quote(str(gid)),
-            source_dirname=quote(source_dirname),
-            vendor_dir=quote("vendor-linux"),
+            vendor_path=quote(f"{source_dirname}/vendor-linux"),
         )
     )
     output = _run_container_with_plugin_dir(LINUX_PLUGIN_BUILDER_IMAGE, command, build_dir)
