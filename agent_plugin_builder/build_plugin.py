@@ -109,7 +109,8 @@ def create_agent_plugin_archive(
     generate_vendor_directories(build_dir_path, agent_plugin_manifest, dependency_method)
     generate_plugin_config_schema(build_dir_path, agent_plugin_manifest)
     create_source_archive(build_dir_path)
-    create_plugin_archive(build_dir_path, agent_plugin_manifest, dist_dir_path)
+    plugin_archive = create_plugin_archive(build_dir_path, agent_plugin_manifest)
+    _copy_plugin_archive_to_dist(plugin_archive, dist_dir_path / plugin_archive.name)
 
 
 def generate_vendor_directories(
@@ -219,14 +220,12 @@ def _source_archive_filter(file_info: tarfile.TarInfo) -> tarfile.TarInfo | None
 def create_plugin_archive(
     build_dir_path: Path,
     agent_plugin_manifest: AgentPluginManifest,
-    dist_dir_path: Path,
-):
+) -> Path:
     """
     Create the Agent Plugin archive.
 
     :param build_dir_path: Path to the build directory.
     :param agent_plugin_manifest: Agent Plugin manifest.
-    :param dist_dir_path: Path to the dist directory.
     """
 
     plugin_archive = build_dir_path / _get_plugin_archive_name(agent_plugin_manifest)
@@ -245,9 +244,7 @@ def create_plugin_archive(
         tar.add(agent_plugin_manifest_file, arcname=agent_plugin_manifest_file.name)
 
     logger.info(f"Plugin archive created: {plugin_archive}")
-
-    plugin_archive_dist = dist_dir_path / plugin_archive.name
-    _copy_plugin_archive_to_dist(plugin_archive, plugin_archive_dist)
+    return plugin_archive
 
 
 def _get_plugin_archive_name(agent_plugin_manifest: AgentPluginManifest) -> str:
