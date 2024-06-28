@@ -32,8 +32,11 @@ where:
         -d/--dist-dir-path: The path where resulting Agent Plugin archive will be stored.
         Default: <current_working_directory>/dist
 
-        -v/--verbose: Multiple occurenences increases the logging level of the console logging.
-        Example: -v means logging.CRITICAL, -vvvvv means logging. DEBUG.
+        -s/--source-dir: The name of the source directory.
+        Default: <plugin_name>_<plugin_type>
+
+        -v/--verbose: Multiple occurrences increases the logging level of the console logging.
+        Example: -v means CRITICAL, -vvvvv means DEBUG.
         Default: if not specific, the logging level will be INFO.
 
 ### Using Poetry
