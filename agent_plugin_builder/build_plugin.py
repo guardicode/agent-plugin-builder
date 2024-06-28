@@ -31,6 +31,7 @@ def build_agent_plugin(
     plugin_path: Path,
     build_dir_path: Path,
     dist_dir_path: Path,
+    source_dirname: str | None = None,
     on_build_dir_created: Callable[[Path], None] | None = None,
 ):
     """
@@ -43,6 +44,8 @@ def build_agent_plugin(
         If the directory does not exist, it will be created else it will be cleared
     :param dist_dir_path: Path to the dist directory.
         If the directory does not exist, it will be created
+    :param source_dirname: Name of the plugin source directory.
+        Default: <plugin_name>_<plugin_type>
     :param on_build_dir_created: Callback function to be called after the build directory is
         created. The function will be called with the build directory path as an argument.
     :raises FileNotFoundError: If the plugin path does not exist.
@@ -74,7 +77,13 @@ def build_agent_plugin(
         on_build_dir_created(build_dir_path)
 
     agent_plugin_manifest = get_agent_plugin_manifest(build_dir_path)
-    create_agent_plugin_archive(build_dir_path, agent_plugin_manifest, dist_dir_path)
+    if not source_dirname:
+        source_dirname = (
+            f"{agent_plugin_manifest.name}_{agent_plugin_manifest.plugin_type.value}".lower()
+        )
+    create_agent_plugin_archive(
+        build_dir_path, dist_dir_path, source_dirname, agent_plugin_manifest
+    )
 
 
 def get_agent_plugin_manifest(build_dir_path: Path) -> AgentPluginManifest:
@@ -95,27 +104,32 @@ def get_agent_plugin_manifest(build_dir_path: Path) -> AgentPluginManifest:
 
 def create_agent_plugin_archive(
     build_dir_path: Path,
-    agent_plugin_manifest: AgentPluginManifest,
     dist_dir_path: Path,
+    source_dirname: str,
+    agent_plugin_manifest: AgentPluginManifest,
 ):
     """
     Create the Agent Plugin tar archive.
 
     :param build_dir_path: Path to the build directory.
-    :param agent_plugin_manifest: Agent Plugin manifest.
     :param dist_dir_path: Path to the dist directory.
+    :param source_dirname: Name of the plugin source directory.
+    :param agent_plugin_manifest: Agent Plugin manifest.
     """
     build_options = parse_agent_plugin_build_options(build_dir_path)
     dependency_method = build_options.platform_dependencies
-    generate_vendor_directories(build_dir_path, agent_plugin_manifest, dependency_method)
-    generate_plugin_config_schema(build_dir_path, agent_plugin_manifest)
-    create_source_archive(build_dir_path)
+    generate_vendor_directories(
+        build_dir_path, source_dirname, agent_plugin_manifest, dependency_method
+    )
+    generate_plugin_config_schema(build_dir_path, source_dirname, agent_plugin_manifest)
+    create_source_archive(build_dir_path, source_dirname)
     plugin_archive = create_plugin_archive(build_dir_path, agent_plugin_manifest)
-    _copy_plugin_archive_to_dist(plugin_archive, dist_dir_path / plugin_archive.name)
+    _copy_plugin_archive_to_dist(plugin_archive, dist_dir_path)
 
 
 def generate_vendor_directories(
     build_dir_path: Path,
+    source_dirname: str,
     agent_plugin_manifest: AgentPluginManifest,
     dependency_method: PlatformDependencyPackagingMethod,
 ):
@@ -127,6 +141,7 @@ def generate_vendor_directories(
     possible, it will generate separate vendor directories for each supported operating system.
 
     :param build_dir_path: Path to the build directory.
+    :param source_dirname: Name of the plugin source directory.
     :param agent_plugin_manifest: Agent Plugin manifest.
     :param dependency_method: Platform dependency packaging method of the vendor directories.
     """
@@ -141,30 +156,33 @@ def generate_vendor_directories(
     )
     generate_requirements_file(build_dir_path)
     if dependency_method == PlatformDependencyPackagingMethod.COMMON:
-        generate_common_vendor_dir(build_dir_path, UID, GID)
+        generate_common_vendor_dir(build_dir_path, source_dirname, UID, GID)
     elif dependency_method == PlatformDependencyPackagingMethod.SEPARATE:
         for os_type in agent_plugin_manifest.supported_operating_systems:
-            generate_vendor_dirs(build_dir_path, os_type, UID, GID)
+            generate_vendor_dirs(build_dir_path, source_dirname, os_type, UID, GID)
     else:
         if len(agent_plugin_manifest.supported_operating_systems) > 1:
             common_dir_possible = check_if_common_vendor_dir_possible(build_dir_path, UID, GID)
             if common_dir_possible:
-                generate_common_vendor_dir(build_dir_path, UID, GID)
+                generate_common_vendor_dir(build_dir_path, source_dirname, UID, GID)
             else:
                 for os_type in agent_plugin_manifest.supported_operating_systems:
-                    generate_vendor_dirs(build_dir_path, os_type, UID, GID)
+                    generate_vendor_dirs(build_dir_path, source_dirname, os_type, UID, GID)
 
 
-def generate_plugin_config_schema(build_dir_path: Path, agent_plugin_manifest: AgentPluginManifest):
+def generate_plugin_config_schema(
+    build_dir_path: Path, source_dirname: str, agent_plugin_manifest: AgentPluginManifest
+):
     """
     Generate the config-schema file for the plugin. The schema is generated
     based on the plugin's options model.
 
     :param build_dir_path: Path to the build directory.
+    :param source_dirname: Name of the plugin source directory.
     :param agent_plugin_manifest: Agent Plugin manifest.
     """
     plugin_options_file_path = (
-        build_dir_path / "src" / f"{agent_plugin_manifest.name.lower()}_options.py"
+        build_dir_path / source_dirname / f"{agent_plugin_manifest.name.lower()}_options.py"
     )
     plugin_config_schema_file_path = build_dir_path / CONFIG_SCHEMA
     plugin_options_model_name = f"{agent_plugin_manifest.name}Options"
@@ -178,7 +196,7 @@ def generate_plugin_config_schema(build_dir_path: Path, agent_plugin_manifest: A
         plugin_options_filename = plugin_options_file_path.stem
         import sys
 
-        sys.path.append(str(build_dir_path / "src"))
+        sys.path.append(str(build_dir_path / source_dirname))
         options = getattr(import_module(plugin_options_filename), plugin_options_model_name)
         config_schema = {"properties": options.model_json_schema()["properties"]}
 
@@ -188,15 +206,16 @@ def generate_plugin_config_schema(build_dir_path: Path, agent_plugin_manifest: A
         f.write(schema_contents)
 
 
-def create_source_archive(build_dir_path: Path) -> Path:
+def create_source_archive(build_dir_path: Path, source_dirname: str) -> Path:
     """
     Create the source archive for the plugin.
 
     :param build_dir_path: Path to the build directory.
+    :param source_dirname: Name of the plugin source directory.
     :return: Path to the source archive.
     """
     source_archive = build_dir_path / f"{SOURCE}.tar.gz"
-    source_build_dir_path = build_dir_path / "src"
+    source_build_dir_path = build_dir_path / source_dirname
 
     logger.info(f"Creating source archive: {source_archive} ")
     with tarfile.open(str(source_archive), "w:gz") as tar:
@@ -264,10 +283,11 @@ def _get_plugin_manifest_filename(build_dir_path: Path) -> Path:
     return build_dir_path / f"{MANIFEST}.yml"
 
 
-def _copy_plugin_archive_to_dist(from_path: Path, dist_dir_path: Path):
+def _copy_plugin_archive_to_dist(plugin_filepath: Path, dist_dir_path: Path):
     if not dist_dir_path.exists():
         logger.info(f"Creating dist directory: {dist_dir_path}")
         dist_dir_path.mkdir(exist_ok=True)
 
-    logger.info(f"Copying plugin archive: {from_path} -> {dist_dir_path}")
-    shutil.copy2(from_path, dist_dir_path)
+    destination_filepath = dist_dir_path / plugin_filepath.name
+    logger.info(f"Copying plugin archive: {plugin_filepath} -> {destination_filepath}")
+    shutil.copy2(plugin_filepath, destination_filepath)

@@ -13,7 +13,7 @@ def main():
     parser.add_argument("plugin_path", metavar="PLUGIN_PATH", type=Path, help="Path to the plugin)")
     parser.add_argument(
         "-b",
-        "--build_dir_path",
+        "--build-dir-path",
         metavar="BUILD_DIR_PATH",
         type=Path,
         default=(Path.cwd() / BUILD),
@@ -21,11 +21,19 @@ def main():
     )
     parser.add_argument(
         "-d",
-        "--dist_dir_path",
+        "--dist-dir-path",
         metavar="DIST_DIR_PATH",
         type=Path,
         default=(Path.cwd() / DIST),
         help="Optional path to the dist directory. Default: <current_working_directory>/dist.",
+    )
+    parser.add_argument(
+        "-s",
+        "--source-dir",
+        metavar="SOURCE_DIR",
+        type=str,
+        default=None,
+        help="Optional name of the source directory. Default: <plugin_name>_<plugin_type>.",
     )
     parser.add_argument(
         "-v",
@@ -45,6 +53,7 @@ def main():
             args.plugin_path,
             args.build_dir_path,
             args.dist_dir_path,
+            source_dirname=args.source_dir,
             on_build_dir_created=lambda dir: add_file_handler(dir),
         )
     except Exception as e:
