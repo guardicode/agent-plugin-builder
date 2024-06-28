@@ -13,6 +13,8 @@ logger = logging.getLogger(__name__)
 
 LINUX_PLUGIN_BUILDER_IMAGE: Final = "infectionmonkey/agent-builder:latest"
 WINDOWS_PLUGIN_BUILDER_IMAGE: Final = "infectionmonkey/plugin-builder:latest"
+LINUX_PACKAGE_LIST_FILE: Final = "linux_packages.json"
+WINDOWS_PACKAGE_LIST_FILE: Final = "windows_packages.json"
 LINUX_IMAGE_PYENV_INIT_COMMANDS: Final = [
     'export PYENV_ROOT="$HOME/.pyenv"',
     'command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"',
@@ -22,8 +24,8 @@ LINUX_BUILD_PACKAGE_LIST_COMMANDS: Final = " && ".join(
     [
         *LINUX_IMAGE_PYENV_INIT_COMMANDS,
         "cd /plugin",
-        "pip install --dry-run -r requirements.txt --report linux.json",
-        "chown {uid}:{gid} /plugin/linux.json",
+        "pip install --dry-run -r requirements.txt --report {filename}",
+        "chown {uid}:{gid} /plugin/{filename}",
     ]
 )
 LINUX_BUILD_VENDOR_DIR_COMMANDS: Final = " && ".join(
@@ -39,8 +41,8 @@ WINDOWS_BUILD_PACKAGE_LIST_COMMANDS: Final = " && ".join(
     [
         WINDOWS_IMAGE_INIT_COMMAND,
         "cd /plugin",
-        "wine pip install --dry-run -r requirements.txt --report windows.json",
-        "chown {uid}:{gid} /plugin/windows.json",
+        "wine pip install --dry-run -r requirements.txt --report {filename}",
+        "chown {uid}:{gid} /plugin/{filename}",
     ]
 )
 WINDOWS_BUILD_VENDOR_DIR_COMMANDS: Final = " && ".join(
@@ -65,25 +67,23 @@ def check_if_common_vendor_dir_possible(build_dir: Path, uid: int, gid: int) -> 
     generate_requirements_file(build_dir)
 
     command = _build_bash_command(
-        LINUX_BUILD_PACKAGE_LIST_COMMANDS.format(uid=quote(str(uid)), gid=quote(str(gid)))
+        LINUX_BUILD_PACKAGE_LIST_COMMANDS.format(
+            uid=quote(str(uid)), gid=quote(str(gid)), filename=quote(LINUX_PACKAGE_LIST_FILE)
+        )
     )
     output = _run_container_with_plugin_dir(LINUX_PLUGIN_BUILDER_IMAGE, command, build_dir)
     _log_container_output(output, "Linux Requirements")
 
     command = _build_bash_command(
-        WINDOWS_BUILD_PACKAGE_LIST_COMMANDS.format(uid=quote(str(uid)), gid=quote(str(gid)))
+        WINDOWS_BUILD_PACKAGE_LIST_COMMANDS.format(
+            uid=quote(str(uid)), gid=quote(str(gid)), filename=quote(WINDOWS_PACKAGE_LIST_FILE)
+        )
     )
     output = _run_container_with_plugin_dir(WINDOWS_PLUGIN_BUILDER_IMAGE, command, build_dir)
     _log_container_output(output, "Windows Requirements")
 
-    linux_packages_path = build_dir / "linux.json"
-    windows_packages_path = build_dir / "windows.json"
-
-    linux_packages = load_package_names(linux_packages_path)
-    windows_packages = load_package_names(windows_packages_path)
-
-    linux_packages_path.unlink()
-    windows_packages_path.unlink()
+    linux_packages = load_package_names(build_dir / LINUX_PACKAGE_LIST_FILE)
+    windows_packages = load_package_names(build_dir / WINDOWS_PACKAGE_LIST_FILE)
 
     response = linux_packages == windows_packages
     if response:
