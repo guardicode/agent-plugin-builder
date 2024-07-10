@@ -1,0 +1,3 @@
+from agent_plugin_builder.build_options import PlatformDependencyPackagingMethod
+
+PlatformDependencyPackagingMethod.AUTODETECT
