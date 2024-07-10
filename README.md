@@ -1,11 +1,25 @@
 # Agent Plugin Builder
 
-A package which with a help of `infectionmonkey/agent-builder` and `infectionmonkey/plugin-builder`
-Docker images, builds an Agent Plugin archive which can be installed in Monkey Island and
-used in the simulation over your network.
+The Agent Plugin Builder is a tool to help with building Agent Plugins for
+[Infection Monkey](https://github.com/guardicore/monkey).
 
-It uses an Python Docker API client to connect to your local Docker environment and
-run with the mentioned Docker Images needed docker commands.
+Since an Agent Plugin may run on multiple platforms, it may have
+platform-specific dependencies. The Agent Plugin Builder will handle building
+your plugin, including vendoring all of your platform-specific dependencies, so
+you don't have to worry about it.
+
+## Background
+
+Current tooling for python packages does not support installing packages for
+another platform. This means that the only supported way of installing
+platform-specific dependencies is to do so on each supported platform. This
+can be a burden to someone who wants to get into developing plugins for
+Infection Monkey.
+
+The Agent Plugin Builder is meant to ease that burden. It gets around the
+platform limitation by using Docker containers, and notably a docker container
+running WINE, to vendor platform-specific dependencies. That way, plugins can
+be built cross-platform on a single machine.
 
 ## Getting started
 
