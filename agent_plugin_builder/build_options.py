@@ -21,7 +21,7 @@ class AgentPluginBuildOptions(InfectionMonkeyBaseModel):
         str,
         Field(
             title="The name of the source directory.",
-            default=None,
+            default="src",
         ),
     ]
     platform_dependencies: Annotated[
