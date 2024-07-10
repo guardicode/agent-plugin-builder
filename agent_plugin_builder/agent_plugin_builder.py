@@ -51,14 +51,15 @@ def main():
     args = parser.parse_args()
     _setup_logging(args.verbosity)
     _log_arguments(args)
-    manifest_file = get_agent_plugin_manifest(args.plugin_path)
-    source_dir = _get_source_dir(args.source_dir, manifest_file)
+    agent_plugin_manifest = get_agent_plugin_manifest(args.plugin_path)
+    source_dir = _get_source_dir(args.source_dir, agent_plugin_manifest)
     cmdline_build_options = AgentPluginBuildOptions(source_dir=source_dir)
     try:
         build_agent_plugin(
             args.plugin_path,
             args.build_dir_path,
             args.dist_dir_path,
+            agent_plugin_manifest,
             cmdline_build_options,
             on_build_dir_created=lambda dir: add_file_handler(dir),
         )
