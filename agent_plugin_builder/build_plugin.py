@@ -35,6 +35,7 @@ def build_agent_plugin(
     plugin_path: Path,
     build_dir_path: Path,
     dist_dir_path: Path,
+    agent_plugin_manifest: AgentPluginManifest,
     build_options_overrides: AgentPluginBuildOptions,
     on_build_dir_created: Callable[[Path], None] | None = None,
 ):
@@ -48,6 +49,7 @@ def build_agent_plugin(
         If the directory does not exist, it will be created else it will be cleared
     :param dist_dir_path: Path to the dist directory.
         If the directory does not exist, it will be created
+    :param agent_plugin_manifest: Agent Plugin manifest.
     :param build_options_overrides: Build options to override the default build options.
         Also overrides any values loaded from the build options file.
     :param on_build_dir_created: Callback function to be called after the build directory is
@@ -80,11 +82,10 @@ def build_agent_plugin(
     if on_build_dir_created:
         on_build_dir_created(build_dir_path)
 
-    agent_plugin_manifest = get_agent_plugin_manifest(build_dir_path)
     build_options = _override_build_options(
         build_options=parse_agent_plugin_build_options(build_dir_path),
         overrides=build_options_overrides,
-        new_defaults=_get_default_build_options(agent_plugin_manifest),
+        new_defaults=_get_default_build_options(),
     )
     logger.debug(f"Using build options: {build_options.model_dump()}")
     create_agent_plugin_archive(build_dir_path, dist_dir_path, agent_plugin_manifest, build_options)
@@ -106,12 +107,8 @@ def get_agent_plugin_manifest(build_dir_path: Path) -> AgentPluginManifest:
         return AgentPluginManifest(**yaml.safe_load(f))
 
 
-def _get_default_build_options(
-    agent_plugin_manifest: AgentPluginManifest,
-) -> AgentPluginBuildOptions:
-    return AgentPluginBuildOptions(
-        source_dir=f"{agent_plugin_manifest.name}_{agent_plugin_manifest.plugin_type.value}".lower()
-    )
+def _get_default_build_options() -> AgentPluginBuildOptions:
+    return AgentPluginBuildOptions()
 
 
 def _override_build_options(
@@ -146,6 +143,7 @@ def create_agent_plugin_archive(
     :param source_dirname: Name of the plugin source directory.
     :param agent_plugin_manifest: Agent Plugin manifest.
     """
+
     dependency_method = build_options.platform_dependencies
     generate_vendor_directories(
         build_dir_path, build_options.source_dir, agent_plugin_manifest, dependency_method
