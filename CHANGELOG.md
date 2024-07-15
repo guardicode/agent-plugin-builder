@@ -8,8 +8,5 @@ the [PEP 440 version scheme](https://peps.python.org/pep-0440/#version-scheme).
 
 
 ## [Unreleased]
-### Added
-### Changed
 ### Fixed
-### Removed
-### Security
+- Improper handling of the `--source-dir` CLI option. #4
