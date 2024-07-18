@@ -1,6 +1,6 @@
 import json
-from os import getuid, getgid
 import logging
+from os import getgid, getuid
 from pathlib import Path
 from shlex import quote
 from typing import Final
@@ -15,21 +15,23 @@ LINUX_PLUGIN_BUILDER_IMAGE: Final = "infectionmonkey/agent-builder:latest"
 WINDOWS_PLUGIN_BUILDER_IMAGE: Final = "infectionmonkey/plugin-builder:latest"
 LINUX_PACKAGE_LIST_FILE: Final = "linux_packages.json"
 WINDOWS_PACKAGE_LIST_FILE: Final = "windows_packages.json"
-LINUX_IMAGE_PYENV_INIT_COMMANDS: Final = [
-    'export PYENV_ROOT="$HOME/.pyenv"',
-    'command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"',
-    'eval "$(pyenv init -)"',
+LINUX_VENV_COMMANDS: Final = [
+    'export PIP_CACHE_DIR="$(mktemp -d)"',
+    'export VENV_DIR="$(mktemp -d)"',
+    "python --version",
+    'python -m venv "$VENV_DIR"',
+    'source "$VENV_DIR/bin/activate"',
 ]
 LINUX_BUILD_PACKAGE_LIST_COMMANDS: Final = " && ".join(
     [
-        *LINUX_IMAGE_PYENV_INIT_COMMANDS,
+        *LINUX_VENV_COMMANDS,
         "cd /plugin",
         "pip install --dry-run -r requirements.txt --report {filename}",
     ]
 )
 LINUX_BUILD_VENDOR_DIR_COMMANDS: Final = " && ".join(
     [
-        *LINUX_IMAGE_PYENV_INIT_COMMANDS,
+        *LINUX_VENV_COMMANDS,
         "cd /plugin",
         "pip install -r requirements.txt -t {vendor_path}",
     ]
@@ -98,7 +100,7 @@ def load_package_names(file_path: Path) -> set[str]:
 
 
 def _build_bash_command(command: str) -> str:
-    return f"/bin/bash -c {quote(command)}"
+    return f"/bin/bash -l -c {quote(command)}"
 
 
 def _run_container_with_plugin_dir(image: str, command: str, plugin_dir: Path) -> bytes:
@@ -113,15 +115,12 @@ def _run_container_with_plugin_dir(image: str, command: str, plugin_dir: Path) -
     client = docker.from_env()  # type: ignore [attr-defined]
     volumes = {str(plugin_dir): {"bind": "/plugin", "mode": "rw"}}
 
-    if image == WINDOWS_PLUGIN_BUILDER_IMAGE:
-        uid = getuid()
-        gid = getgid()
+    uid = getuid()
+    gid = getgid()
 
-        return client.containers.run(
-            image, command=command, volumes=volumes, remove=True, user=f"{uid}:{gid}"
-        )
-
-    return client.containers.run(image, command=command, volumes=volumes, remove=True)
+    return client.containers.run(
+        image, command=command, volumes=volumes, remove=True, user=f"{uid}:{gid}"
+    )
 
 
 def generate_common_vendor_dir(build_dir: Path, source_dirname: str):
