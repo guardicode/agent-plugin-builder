@@ -172,29 +172,24 @@ def generate_vendor_directories(
     :param agent_plugin_manifest: Agent Plugin manifest.
     :param dependency_method: Platform dependency packaging method of the vendor directories.
     """
-    import os
-
-    UID = os.getuid()
-    GID = os.getgid()
-
     logger.info(
         f"Generating vendor directories for plugin: {agent_plugin_manifest.name}, "
         f"dependency_method: {dependency_method}"
     )
     generate_requirements_file(build_dir_path)
     if dependency_method == PlatformDependencyPackagingMethod.COMMON:
-        generate_common_vendor_dir(build_dir_path, source_dirname, UID, GID)
+        generate_common_vendor_dir(build_dir_path, source_dirname)
     elif dependency_method == PlatformDependencyPackagingMethod.SEPARATE:
         for os_type in agent_plugin_manifest.supported_operating_systems:
-            generate_vendor_dirs(build_dir_path, source_dirname, os_type, UID, GID)
+            generate_vendor_dirs(build_dir_path, source_dirname, os_type)
     else:
         if len(agent_plugin_manifest.supported_operating_systems) > 1:
-            common_dir_possible = check_if_common_vendor_dir_possible(build_dir_path, UID, GID)
+            common_dir_possible = check_if_common_vendor_dir_possible(build_dir_path)
             if common_dir_possible:
-                generate_common_vendor_dir(build_dir_path, source_dirname, UID, GID)
+                generate_common_vendor_dir(build_dir_path, source_dirname)
             else:
                 for os_type in agent_plugin_manifest.supported_operating_systems:
-                    generate_vendor_dirs(build_dir_path, source_dirname, os_type, UID, GID)
+                    generate_vendor_dirs(build_dir_path, source_dirname, os_type)
 
 
 def generate_plugin_config_schema(

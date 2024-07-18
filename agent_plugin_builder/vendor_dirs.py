@@ -1,5 +1,6 @@
 import json
 import logging
+from os import getgid, getuid
 from pathlib import Path
 from shlex import quote
 from typing import Final
@@ -10,30 +11,29 @@ import docker
 
 logger = logging.getLogger(__name__)
 
-
 LINUX_PLUGIN_BUILDER_IMAGE: Final = "infectionmonkey/agent-builder:latest"
 WINDOWS_PLUGIN_BUILDER_IMAGE: Final = "infectionmonkey/plugin-builder:latest"
 LINUX_PACKAGE_LIST_FILE: Final = "linux_packages.json"
 WINDOWS_PACKAGE_LIST_FILE: Final = "windows_packages.json"
-LINUX_IMAGE_PYENV_INIT_COMMANDS: Final = [
-    'export PYENV_ROOT="$HOME/.pyenv"',
-    'command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"',
-    'eval "$(pyenv init -)"',
+LINUX_VENV_COMMANDS: Final = [
+    'export PIP_CACHE_DIR="$(mktemp -d)"',
+    'export VENV_DIR="$(mktemp -d)"',
+    "python --version",
+    'python -m venv "$VENV_DIR"',
+    'source "$VENV_DIR/bin/activate"',
 ]
 LINUX_BUILD_PACKAGE_LIST_COMMANDS: Final = " && ".join(
     [
-        *LINUX_IMAGE_PYENV_INIT_COMMANDS,
+        *LINUX_VENV_COMMANDS,
         "cd /plugin",
         "pip install --dry-run -r requirements.txt --report {filename}",
-        "chown {uid}:{gid} {filename}",
     ]
 )
 LINUX_BUILD_VENDOR_DIR_COMMANDS: Final = " && ".join(
     [
-        *LINUX_IMAGE_PYENV_INIT_COMMANDS,
+        *LINUX_VENV_COMMANDS,
         "cd /plugin",
         "pip install -r requirements.txt -t {vendor_path}",
-        "chown -R {uid}:{gid} {vendor_path}",
     ]
 )
 WINDOWS_IMAGE_INIT_COMMAND: Final = ". /opt/mkuserwineprefix"
@@ -42,7 +42,6 @@ WINDOWS_BUILD_PACKAGE_LIST_COMMANDS: Final = " && ".join(
         WINDOWS_IMAGE_INIT_COMMAND,
         "cd /plugin",
         "wine pip install --dry-run -r requirements.txt --report {filename}",
-        "chown {uid}:{gid} {filename}",
     ]
 )
 WINDOWS_BUILD_VENDOR_DIR_COMMANDS: Final = " && ".join(
@@ -50,35 +49,28 @@ WINDOWS_BUILD_VENDOR_DIR_COMMANDS: Final = " && ".join(
         WINDOWS_IMAGE_INIT_COMMAND,
         "cd /plugin",
         "wine pip install -r requirements.txt -t {source_dirname}/vendor-windows",
-        "chown -R {uid}:{gid} {source_dirname}/vendor-windows",
     ]
 )
 
 
-def check_if_common_vendor_dir_possible(build_dir: Path, uid: int, gid: int) -> bool:
+def check_if_common_vendor_dir_possible(build_dir: Path) -> bool:
     """
     Check if a common vendor directory is possible by comparing the package lists generated
     from a dry run of the requirements installation on Linux and Windows.
 
     :param build_dir: Path to the build directory.
-    :param uid: User ID to set on the vendor directory.
-    :param gid: Group ID to set on the vendor directory.
     :return: True if a common vendor directory is possible, False otherwise.
     """
     generate_requirements_file(build_dir)
 
     command = _build_bash_command(
-        LINUX_BUILD_PACKAGE_LIST_COMMANDS.format(
-            uid=quote(str(uid)), gid=quote(str(gid)), filename=quote(LINUX_PACKAGE_LIST_FILE)
-        )
+        LINUX_BUILD_PACKAGE_LIST_COMMANDS.format(filename=quote(LINUX_PACKAGE_LIST_FILE))
     )
     output = _run_container_with_plugin_dir(LINUX_PLUGIN_BUILDER_IMAGE, command, build_dir)
     _log_container_output(output, "Linux Requirements")
 
     command = _build_bash_command(
-        WINDOWS_BUILD_PACKAGE_LIST_COMMANDS.format(
-            uid=quote(str(uid)), gid=quote(str(gid)), filename=quote(WINDOWS_PACKAGE_LIST_FILE)
-        )
+        WINDOWS_BUILD_PACKAGE_LIST_COMMANDS.format(filename=quote(WINDOWS_PACKAGE_LIST_FILE))
     )
     output = _run_container_with_plugin_dir(WINDOWS_PLUGIN_BUILDER_IMAGE, command, build_dir)
     _log_container_output(output, "Windows Requirements")
@@ -108,7 +100,7 @@ def load_package_names(file_path: Path) -> set[str]:
 
 
 def _build_bash_command(command: str) -> str:
-    return f"/bin/bash -c {quote(command)}"
+    return f"/bin/bash -l -c {quote(command)}"
 
 
 def _run_container_with_plugin_dir(image: str, command: str, plugin_dir: Path) -> bytes:
@@ -120,25 +112,26 @@ def _run_container_with_plugin_dir(image: str, command: str, plugin_dir: Path) -
     :param plugin_dir: Path to the plugin directory.
     :return: Output of the container.
     """
-
     client = docker.from_env()  # type: ignore [attr-defined]
     volumes = {str(plugin_dir): {"bind": "/plugin", "mode": "rw"}}
-    return client.containers.run(image, command=command, volumes=volumes, remove=True)
+
+    uid = getuid()
+    gid = getgid()
+
+    return client.containers.run(
+        image, command=command, volumes=volumes, remove=True, user=f"{uid}:{gid}"
+    )
 
 
-def generate_common_vendor_dir(build_dir: Path, source_dirname: str, uid: int, gid: int):
+def generate_common_vendor_dir(build_dir: Path, source_dirname: str):
     """
     Generate a common vendor directory by installing the requirements in a Linux container.
 
     :param build_dir: Path to the build directory.
     :param source_dirname: Name of the source directory.
-    :param uid: User ID to set on the vendor directory.
-    :param gid: Group ID to set on the vendor directory.
     """
     command = _build_bash_command(
         LINUX_BUILD_VENDOR_DIR_COMMANDS.format(
-            uid=quote(str(uid)),
-            gid=quote(str(gid)),
             vendor_path=quote(f"{source_dirname}/vendor"),
         )
     )
@@ -146,36 +139,28 @@ def generate_common_vendor_dir(build_dir: Path, source_dirname: str, uid: int, g
     _log_container_output(output, "Common Vendor Directory")
 
 
-def generate_vendor_dirs(
-    build_dir: Path, source_dirname: str, operating_system: OperatingSystem, uid: int, gid: int
-):
+def generate_vendor_dirs(build_dir: Path, source_dirname: str, operating_system: OperatingSystem):
     """
     Generate the vendor directories for the plugin.
 
     :param build_dir: Path to the build directory.
     :param source_dirname: Name of the source directory.
     :param operating_system: Operating system to generate the vendor directories for.
-    :param uid: User ID to set on the vendor directory.
-    :param gid: Group ID to set on the vendor directory.
     """
     if operating_system == OperatingSystem.LINUX:
-        generate_linux_vendor_dir(build_dir, source_dirname, uid, gid)
+        generate_linux_vendor_dir(build_dir, source_dirname)
     elif operating_system == OperatingSystem.WINDOWS:
-        generate_windows_vendor_dir(build_dir, source_dirname, uid, gid)
+        generate_windows_vendor_dir(build_dir, source_dirname)
 
 
-def generate_linux_vendor_dir(build_dir: Path, source_dirname: str, uid: int, gid: int):
+def generate_linux_vendor_dir(build_dir: Path, source_dirname: str):
     """
     Generate the Linux vendor directory by installing the requirements in a Linux container.
 
     :param build_dir: Path to the build directory.
-    :param uid: User ID to set on the vendor directory.
-    :param gid: Group ID to set on the vendor directory.
     """
     command = _build_bash_command(
         LINUX_BUILD_VENDOR_DIR_COMMANDS.format(
-            uid=quote(str(uid)),
-            gid=quote(str(gid)),
             vendor_path=quote(f"{source_dirname}/vendor-linux"),
         )
     )
@@ -183,19 +168,15 @@ def generate_linux_vendor_dir(build_dir: Path, source_dirname: str, uid: int, gi
     _log_container_output(output, "Linux Vendor directory")
 
 
-def generate_windows_vendor_dir(build_dir: Path, source_dirname: str, uid: int, gid: int):
+def generate_windows_vendor_dir(build_dir: Path, source_dirname: str):
     """
     Generate the Windows vendor directory by installing the requirements in a Linux Container
     with Wine installed.
 
     :param build_dir: Path to the build directory.
-    :param uid: User ID to set on the vendor directory.
-    :param gid: Group ID to set on the vendor directory.
     """
     command = _build_bash_command(
-        WINDOWS_BUILD_VENDOR_DIR_COMMANDS.format(
-            uid=quote(str(uid)), gid=quote(str(gid)), source_dirname=quote(source_dirname)
-        )
+        WINDOWS_BUILD_VENDOR_DIR_COMMANDS.format(source_dirname=quote(source_dirname))
     )
     output = _run_container_with_plugin_dir(WINDOWS_PLUGIN_BUILDER_IMAGE, command, build_dir)
     _log_container_output(output, "Windows Vendor Directory")
