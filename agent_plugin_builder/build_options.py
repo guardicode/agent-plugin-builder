@@ -3,9 +3,11 @@ from enum import Enum
 from pathlib import Path
 from typing import Annotated
 
-import yaml
 from monkeytypes.base_models import InfectionMonkeyBaseModel
 from pydantic import Field
+
+BUILD = "build"
+DIST = "dist"
 
 logger = logging.getLogger(__name__)
 
@@ -17,11 +19,30 @@ class PlatformDependencyPackagingMethod(Enum):
 
 
 class AgentPluginBuildOptions(InfectionMonkeyBaseModel):
+    plugin_path: Annotated[
+        Path,
+        Field(
+            title="The path to the plugin code directory.",
+        ),
+    ]
+    build_dir_path: Annotated[
+        Path,
+        Field(
+            title="The path to the build directory.",
+            default_factory=lambda: Path.cwd() / BUILD,
+        ),
+    ]
+    dist_dir_path: Annotated[
+        Path,
+        Field(
+            title="The path to the dist directory.",
+            default_factory=lambda: Path.cwd() / DIST,
+        ),
+    ]
     source_dir: Annotated[
         str,
         Field(
             title="The name of the source directory.",
-            default="src",
         ),
     ]
     platform_dependencies: Annotated[
@@ -43,22 +64,26 @@ class AgentPluginBuildOptions(InfectionMonkeyBaseModel):
             default=PlatformDependencyPackagingMethod.SEPARATE,
         ),
     ]
+    verify_hashes: Annotated[
+        bool,
+        Field(
+            title="Whether to verify plugin's dependencies.",
+            default=False,
+        ),
+    ]
 
 
-def parse_agent_plugin_build_options(plugin_path: Path) -> AgentPluginBuildOptions:
+def parse_agent_plugin_build_options(args) -> AgentPluginBuildOptions:
     """
-    Parse the build options for an agent plugin from the plugin's directory.
+    Validate the arguments passed to the agent plugin builder
 
-    :param plugin_path: The path to the plugin code directory.
+    :param args: The arguments passed to the agent plugin builder.
+    :return: AgentPluginBuildOptions.
     """
-    build_config_file_path = plugin_path / "build.yaml"
-    if not build_config_file_path.exists():
-        build_config_file_path = plugin_path / "build.yml"
+    arguments_dict = vars(args)
 
-    if not build_config_file_path.exists():
-        logger.info("Build options not found, using defaults.")
-        return AgentPluginBuildOptions()
+    arguments_dict["verify_hashes"] = arguments_dict["verify"]
+    del arguments_dict["verify"]
+    del arguments_dict["verbosity"]
 
-    logger.info(f"Using build options from {build_config_file_path}")
-    with build_config_file_path.open("r") as f:
-        return AgentPluginBuildOptions(**yaml.safe_load(f))
+    return AgentPluginBuildOptions(**arguments_dict)

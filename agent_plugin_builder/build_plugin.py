@@ -4,16 +4,13 @@ import shutil
 import tarfile
 from importlib import import_module
 from pathlib import Path
+from pprint import pformat
 from typing import Callable
 
 import yaml
 from monkeytypes import AgentPluginManifest
 
-from .build_options import (
-    AgentPluginBuildOptions,
-    PlatformDependencyPackagingMethod,
-    parse_agent_plugin_build_options,
-)
+from .build_options import AgentPluginBuildOptions, PlatformDependencyPackagingMethod
 from .vendor_dirs import (
     check_if_common_vendor_dir_possible,
     generate_common_vendor_dir,
@@ -24,71 +21,68 @@ from .vendor_dirs import (
 logger = logging.getLogger(__name__)
 
 
-BUILD = "build"
-DIST = "dist"
 CONFIG_SCHEMA = "config-schema.json"
 SOURCE = "source"
 MANIFEST = "manifest"
 
 
 def build_agent_plugin(
-    plugin_path: Path,
-    build_dir_path: Path,
-    dist_dir_path: Path,
+    agent_plugin_build_options: AgentPluginBuildOptions,
     agent_plugin_manifest: AgentPluginManifest,
-    build_options_overrides: AgentPluginBuildOptions,
     on_build_dir_created: Callable[[Path], None] | None = None,
 ):
     """
     Build the agent plugin by copying the plugin code to the build directory and generating the
     Agent Plugin archive.
 
-    :param plugin_path: Path to the plugin code.
-        If the directory does not exist, an error will be raised
-    :param build_dir_path: Path to the build directory.
-        If the directory does not exist, it will be created else it will be cleared
-    :param dist_dir_path: Path to the dist directory.
-        If the directory does not exist, it will be created
+    :param agent_plugin_build_options: Agent Plugin build options.
     :param agent_plugin_manifest: Agent Plugin manifest.
-    :param build_options_overrides: Build options to override the default build options.
-        Also overrides any values loaded from the build options file.
     :param on_build_dir_created: Callback function to be called after the build directory is
         created. The function will be called with the build directory path as an argument.
     :raises FileNotFoundError: If the plugin path does not exist.
     :raises shutil.Error: If there is an error preparing the build directory.
     """
 
-    if not plugin_path.exists():
-        logger.error(f"Plugin path {plugin_path} does not exist")
-        raise FileNotFoundError(f"Plugin path {plugin_path} does not exist")
+    if not agent_plugin_build_options.plugin_path.exists():
+        logger.error(f"Plugin path {agent_plugin_build_options.plugin_path} does not exist")
+        raise FileNotFoundError(
+            f"Plugin path {agent_plugin_build_options.plugin_path} does not exist"
+        )
 
-    if build_dir_path.exists():
+    if agent_plugin_build_options.build_dir_path.exists():
         try:
-            logger.info(f"Clearing build directory: {build_dir_path}")
-            shutil.rmtree(build_dir_path)
+            logger.info(f"Clearing build directory: {agent_plugin_build_options.build_dir_path}")
+            shutil.rmtree(agent_plugin_build_options.build_dir_path)
         except shutil.Error as err:
-            logger.error(f"Unable to clear build directory: {build_dir_path}")
+            logger.error(
+                f"Unable to clear build directory: {agent_plugin_build_options.build_dir_path}"
+            )
             raise err
 
     try:
-        logger.info(f"Copying plugin code to build directory: {plugin_path} -> {build_dir_path}")
-        shutil.copytree(plugin_path, build_dir_path, dirs_exist_ok=True)
+        logger.info(
+            "Copying plugin code to build directory: "
+            f"{agent_plugin_build_options.plugin_path} -> "
+            f"{agent_plugin_build_options.build_dir_path}"
+        )
+        shutil.copytree(
+            agent_plugin_build_options.plugin_path,
+            agent_plugin_build_options.build_dir_path,
+            dirs_exist_ok=True,
+        )
     except shutil.Error as err:
         logger.error(
-            f"Unable to copy plugin code to build directory: {plugin_path} -> {build_dir_path}"
+            "Unable to copy plugin code to build directory: "
+            f"{agent_plugin_build_options.plugin_path} -> "
+            f"{agent_plugin_build_options.build_dir_path}"
         )
         raise err
 
     if on_build_dir_created:
-        on_build_dir_created(build_dir_path)
+        on_build_dir_created(agent_plugin_build_options.build_dir_path)
 
-    build_options = _override_build_options(
-        build_options=parse_agent_plugin_build_options(build_dir_path),
-        overrides=build_options_overrides,
-        new_defaults=_get_default_build_options(),
-    )
-    logger.debug(f"Using build options: {build_options.model_dump()}")
-    create_agent_plugin_archive(build_dir_path, dist_dir_path, agent_plugin_manifest, build_options)
+    logger.debug(f"Using build options: {pformat(agent_plugin_build_options.model_dump())}")
+    create_agent_plugin_archive(agent_plugin_build_options, agent_plugin_manifest)
 
 
 def get_agent_plugin_manifest(build_dir_path: Path) -> AgentPluginManifest:
@@ -107,58 +101,38 @@ def get_agent_plugin_manifest(build_dir_path: Path) -> AgentPluginManifest:
         return AgentPluginManifest(**yaml.safe_load(f))
 
 
-def _get_default_build_options() -> AgentPluginBuildOptions:
-    return AgentPluginBuildOptions()
-
-
-def _override_build_options(
-    build_options: AgentPluginBuildOptions,
-    overrides: AgentPluginBuildOptions,
-    new_defaults: AgentPluginBuildOptions,
-) -> AgentPluginBuildOptions:
-    logger.debug(f"Build options default overrides: {new_defaults.model_dump(exclude_unset=True)}")
-    logger.debug(f"Build options from file: {build_options.model_dump(exclude_unset=True)}")
-    logger.debug(f"Build options overrides: {overrides.model_dump(exclude_unset=True)}")
-    build_options_dict = build_options.model_dump(exclude_defaults=True, exclude_unset=True)
-    overrides_dict = overrides.model_dump(exclude_defaults=True, exclude_unset=True)
-    new_defaults_dict = new_defaults.model_dump(exclude_unset=True)
-
-    options_dict = new_defaults_dict
-    options_dict.update(build_options_dict)
-    options_dict.update(overrides_dict)
-    return AgentPluginBuildOptions(**options_dict)
-
-
 def create_agent_plugin_archive(
-    build_dir_path: Path,
-    dist_dir_path: Path,
+    agent_plugin_build_options: AgentPluginBuildOptions,
     agent_plugin_manifest: AgentPluginManifest,
-    build_options: AgentPluginBuildOptions,
 ):
     """
     Create the Agent Plugin tar archive.
 
-    :param build_dir_path: Path to the build directory.
-    :param dist_dir_path: Path to the dist directory.
-    :param source_dirname: Name of the plugin source directory.
+    :param agent_plugin_build_options: Agent Plugin build options.
     :param agent_plugin_manifest: Agent Plugin manifest.
     """
 
-    dependency_method = build_options.platform_dependencies
     generate_vendor_directories(
-        build_dir_path, build_options.source_dir, agent_plugin_manifest, dependency_method
+        agent_plugin_build_options,
+        agent_plugin_manifest,
     )
-    generate_plugin_config_schema(build_dir_path, build_options.source_dir, agent_plugin_manifest)
-    create_source_archive(build_dir_path, build_options.source_dir)
-    plugin_archive = create_plugin_archive(build_dir_path, agent_plugin_manifest)
-    _copy_plugin_archive_to_dist(plugin_archive, dist_dir_path)
+    generate_plugin_config_schema(
+        agent_plugin_build_options.build_dir_path,
+        agent_plugin_build_options.source_dir,
+        agent_plugin_manifest,
+    )
+    create_source_archive(
+        agent_plugin_build_options.build_dir_path, agent_plugin_build_options.source_dir
+    )
+    plugin_archive = create_plugin_archive(
+        agent_plugin_build_options.build_dir_path, agent_plugin_manifest
+    )
+    _copy_plugin_archive_to_dist(plugin_archive, agent_plugin_build_options.dist_dir_path)
 
 
 def generate_vendor_directories(
-    build_dir_path: Path,
-    source_dirname: str,
+    agent_plugin_build_options: AgentPluginBuildOptions,
     agent_plugin_manifest: AgentPluginManifest,
-    dependency_method: PlatformDependencyPackagingMethod,
 ):
     """
     Generate the vendor directories for the plugin.
@@ -167,29 +141,46 @@ def generate_vendor_directories(
     function will try to generate a common vendor directory. If a common vendor directory is not
     possible, it will generate separate vendor directories for each supported operating system.
 
-    :param build_dir_path: Path to the build directory.
-    :param source_dirname: Name of the plugin source directory.
+    :param agent_plugin_build_options: Agent Plugin build options.
     :param agent_plugin_manifest: Agent Plugin manifest.
-    :param dependency_method: Platform dependency packaging method of the vendor directories.
     """
     logger.info(
         f"Generating vendor directories for plugin: {agent_plugin_manifest.name}, "
-        f"dependency_method: {dependency_method}"
+        f"dependency_method: {agent_plugin_build_options.platform_dependencies}"
     )
-    generate_requirements_file(build_dir_path)
-    if dependency_method == PlatformDependencyPackagingMethod.COMMON:
-        generate_common_vendor_dir(build_dir_path, source_dirname)
-    elif dependency_method == PlatformDependencyPackagingMethod.SEPARATE:
+    generate_requirements_file(
+        agent_plugin_build_options.build_dir_path, agent_plugin_build_options.verify_hashes
+    )
+    if agent_plugin_build_options.platform_dependencies == PlatformDependencyPackagingMethod.COMMON:
+        generate_common_vendor_dir(
+            agent_plugin_build_options.build_dir_path, agent_plugin_build_options.source_dir
+        )
+    elif (
+        agent_plugin_build_options.platform_dependencies
+        == PlatformDependencyPackagingMethod.SEPARATE
+    ):
         for os_type in agent_plugin_manifest.supported_operating_systems:
-            generate_vendor_dirs(build_dir_path, source_dirname, os_type)
+            generate_vendor_dirs(
+                agent_plugin_build_options.build_dir_path,
+                agent_plugin_build_options.source_dir,
+                os_type,
+            )
     else:
         if len(agent_plugin_manifest.supported_operating_systems) > 1:
-            common_dir_possible = check_if_common_vendor_dir_possible(build_dir_path)
+            common_dir_possible = check_if_common_vendor_dir_possible(
+                agent_plugin_build_options.build_dir_path, agent_plugin_build_options.verify_hashes
+            )
             if common_dir_possible:
-                generate_common_vendor_dir(build_dir_path, source_dirname)
+                generate_common_vendor_dir(
+                    agent_plugin_build_options.build_dir_path, agent_plugin_build_options.source_dir
+                )
             else:
                 for os_type in agent_plugin_manifest.supported_operating_systems:
-                    generate_vendor_dirs(build_dir_path, source_dirname, os_type)
+                    generate_vendor_dirs(
+                        agent_plugin_build_options.build_dir_path,
+                        agent_plugin_build_options.source_dir,
+                        os_type,
+                    )
 
 
 def generate_plugin_config_schema(
