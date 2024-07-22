@@ -31,7 +31,7 @@ class CustomFormatter(ArgumentDefaultsHelpFormatter, RawTextHelpFormatter):
             default_str = "<plugin_name>_<plugin_type>: Ex. ssh_exploiter"
             help_str += "(Default: <plugin_name>_<plugin_type>: Ex. ssh_exploiter)"
         elif action.metavar == "PLATFORM_DEPENDENCIES":
-            default_str = "separate"
+            default_str = action.default.value
         elif action.metavar == "HASHES":
             default_str = "Include hashes in requirements.txt file"
         else:
@@ -79,7 +79,7 @@ def main():
         "--platform-dependencies",
         metavar="PLATFORM_DEPENDENCIES",
         type=PlatformDependencyPackagingMethod,
-        default=PlatformDependencyPackagingMethod.SEPARATE,
+        default=PlatformDependencyPackagingMethod.AUTODETECT,
         help="""Since plugin dependencies must be vendored, this setting determines how
 the plugin builder should package dependencies for it's supported platforms.
 

@@ -45,7 +45,7 @@ where:
             however it results in a larger plugin file, since dependencies are
             duplicated for each platform.
         autodetect: The plugin builder will attempt to detect the best method to use.
-        Default: seperate
+        Default: autodetect
 
         -ver/--verify/--no-verify: Specify whether to verify the plugin's dependencies.
         --verify: Verify the integrity of the plugin's dependencies. (Recommended, default)
