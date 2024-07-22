@@ -58,10 +58,11 @@ class AgentPluginBuildOptions(InfectionMonkeyBaseModel):
               separate: Some or all dependencies are platform-dependent, and are therefore packaged
                         separately for each supported platform. This is the most reliable option,
                         however it results in a larger plugin file, since dependencies are
-                        duplicated for each platform. This is the default option.
+                        duplicated for each platform.
               autodetect: The plugin builder will attempt to detect the best method to use.
+                        Default option
             """,
-            default=PlatformDependencyPackagingMethod.SEPARATE,
+            default=PlatformDependencyPackagingMethod.AUTODETECT,
         ),
     ]
     verify_hashes: Annotated[
