@@ -1,3 +1,3 @@
-from agent_plugin_builder.build_options import PlatformDependencyPackagingMethod
+from agent_plugin_builder.agent_plugin_builder import CustomFormatter
 
-PlatformDependencyPackagingMethod.AUTODETECT
+CustomFormatter._get_help_string

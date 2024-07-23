@@ -36,6 +36,22 @@ where:
         -s/--source-dir: The name of the source directory.
         Default: <plugin_name>_<plugin_type>
 
+        -pd/--platform-dependencies: The platform dependencies for the Agent Plugin.
+        Options:
+        common: All dependencies are packaged once, and shared across all platforms. This
+            should only be used if all dependencies are known to be platform-independent.
+        separate: Some or all dependencies are platform-dependent, and are therefore packaged
+            separately for each supported platform. This is the most reliable option,
+            however it results in a larger plugin file, since dependencies are
+            duplicated for each platform.
+        autodetect: The plugin builder will attempt to detect the best method to use.
+        Default: autodetect
+
+        -ver/--verify/--no-verify: Specify whether to verify the plugin's dependencies.
+        --verify: Verify the integrity of the plugin's dependencies. (Recommended, default)
+        --no-hverify: Do not verify the integrity of the plugin's dependencies. (Not recommended)
+        not specified: Same as --verify.
+
         -v/--verbose: Multiple occurrences increases the logging level of the console logging.
         Example: -v means CRITICAL, -vvvvv means DEBUG.
         Default: if not specific, the logging level will be INFO.

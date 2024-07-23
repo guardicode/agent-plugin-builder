@@ -53,15 +53,16 @@ WINDOWS_BUILD_VENDOR_DIR_COMMANDS: Final = " && ".join(
 )
 
 
-def check_if_common_vendor_dir_possible(build_dir: Path) -> bool:
+def check_if_common_vendor_dir_possible(build_dir: Path, verify_hashes: bool = True) -> bool:
     """
     Check if a common vendor directory is possible by comparing the package lists generated
     from a dry run of the requirements installation on Linux and Windows.
 
     :param build_dir: Path to the build directory.
+    :param verify_hashes: Include hashes in the requirements file.
     :return: True if a common vendor directory is possible, False otherwise.
     """
-    generate_requirements_file(build_dir)
+    generate_requirements_file(build_dir, verify_hashes)
 
     command = _build_bash_command(
         LINUX_BUILD_PACKAGE_LIST_COMMANDS.format(filename=quote(LINUX_PACKAGE_LIST_FILE))
@@ -186,17 +187,33 @@ def _log_container_output(container_logs: bytes, prefix: str = ""):
     logger.debug(f"{prefix} Container logs: {container_logs.decode('utf-8')}")
 
 
-def generate_requirements_file(build_dir: Path):
+def generate_requirements_file(build_dir: Path, verify_hashes: bool = True):
     """
     Generate the requirements file from the lock file depending on the lock file present.
 
     :param build_dir: Path to the build directory.
+    :param verify_hashes: Verify plugin's dependency hashes.
     """
     import subprocess
 
     logger.info("Generating requirements file")
     if (build_dir / "poetry.lock").exists():
-        command = ["poetry", "export", "-f", "requirements.txt", "-o", "requirements.txt"]
+        command = [
+            "poetry",
+            "export",
+            "-f",
+            "requirements.txt",
+            "-o",
+            "requirements.txt",
+        ]
+        if not verify_hashes:
+            logger.warning(
+                "WARNING: Plugins dependencies are not going to be verified. "
+                "This can allow supply-chain attacks to go unnoticed. A malicious actor "
+                "could slip bad code into the installation via one of unverified dependencies.",
+            )
+            command.append("--without-hashes")
+
         process = subprocess.Popen(
             command, cwd=str(build_dir), stdout=subprocess.PIPE, stderr=subprocess.STDOUT
         )
