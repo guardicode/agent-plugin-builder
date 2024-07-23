@@ -43,7 +43,7 @@ paths = ["agent_plugin_builder", "vulture_allowlist.py"]
 
 [tool.poetry]
 name = "agent-plugin-builder"
-version = "v0.4.0"
+version = "v0.5.0"
 description = "Builder for Agent Plugins."
 authors = ["Ilija Lazoroski <ilija.lazoroski@gmail.com>"]
 license = "GPLv3"
