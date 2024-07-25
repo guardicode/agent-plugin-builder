@@ -53,31 +53,31 @@ WINDOWS_BUILD_VENDOR_DIR_COMMANDS: Final = " && ".join(
 )
 
 
-def check_if_common_vendor_dir_possible(build_dir: Path, verify_hashes: bool = True) -> bool:
+def check_if_common_vendor_dir_possible(build_dir_path: Path, verify_hashes: bool = True) -> bool:
     """
     Check if a common vendor directory is possible by comparing the package lists generated
     from a dry run of the requirements installation on Linux and Windows.
 
-    :param build_dir: Path to the build directory.
+    :param build_dir_path: Path to the build directory.
     :param verify_hashes: Include hashes in the requirements file.
     :return: True if a common vendor directory is possible, False otherwise.
     """
-    generate_requirements_file(build_dir, verify_hashes)
+    generate_requirements_file(build_dir_path, verify_hashes)
 
     command = _build_bash_command(
         LINUX_BUILD_PACKAGE_LIST_COMMANDS.format(filename=quote(LINUX_PACKAGE_LIST_FILE))
     )
-    output = _run_container_with_plugin_dir(LINUX_PLUGIN_BUILDER_IMAGE, command, build_dir)
+    output = _run_container_with_plugin_dir(LINUX_PLUGIN_BUILDER_IMAGE, command, build_dir_path)
     _log_container_output(output, "Linux Requirements")
 
     command = _build_bash_command(
         WINDOWS_BUILD_PACKAGE_LIST_COMMANDS.format(filename=quote(WINDOWS_PACKAGE_LIST_FILE))
     )
-    output = _run_container_with_plugin_dir(WINDOWS_PLUGIN_BUILDER_IMAGE, command, build_dir)
+    output = _run_container_with_plugin_dir(WINDOWS_PLUGIN_BUILDER_IMAGE, command, build_dir_path)
     _log_container_output(output, "Windows Requirements")
 
-    linux_packages = _load_package_names(build_dir / LINUX_PACKAGE_LIST_FILE)
-    windows_packages = _load_package_names(build_dir / WINDOWS_PACKAGE_LIST_FILE)
+    linux_packages = _load_package_names(build_dir_path / LINUX_PACKAGE_LIST_FILE)
+    windows_packages = _load_package_names(build_dir_path / WINDOWS_PACKAGE_LIST_FILE)
 
     response = linux_packages == windows_packages
     if response:
@@ -124,11 +124,11 @@ def _run_container_with_plugin_dir(image: str, command: str, plugin_dir: Path) -
     )
 
 
-def generate_common_vendor_dir(build_dir: Path, source_dirname: str):
+def generate_common_vendor_dir(build_dir_path: Path, source_dirname: str):
     """
     Generate a common vendor directory by installing the requirements in a Linux container.
 
-    :param build_dir: Path to the build directory.
+    :param build_dir_path: Path to the build directory.
     :param source_dirname: Name of the source directory.
     """
     command = _build_bash_command(
@@ -136,50 +136,52 @@ def generate_common_vendor_dir(build_dir: Path, source_dirname: str):
             vendor_path=quote(f"{source_dirname}/vendor"),
         )
     )
-    output = _run_container_with_plugin_dir(LINUX_PLUGIN_BUILDER_IMAGE, command, build_dir)
+    output = _run_container_with_plugin_dir(LINUX_PLUGIN_BUILDER_IMAGE, command, build_dir_path)
     _log_container_output(output, "Common Vendor Directory")
 
 
-def generate_vendor_dirs(build_dir: Path, source_dirname: str, operating_system: OperatingSystem):
+def generate_vendor_dirs(
+    build_dir_path: Path, source_dirname: str, operating_system: OperatingSystem
+):
     """
     Generate the vendor directories for the plugin.
 
-    :param build_dir: Path to the build directory.
+    :param build_dir_path: Path to the build directory.
     :param source_dirname: Name of the source directory.
     :param operating_system: Operating system to generate the vendor directories for.
     """
     if operating_system == OperatingSystem.LINUX:
-        generate_linux_vendor_dir(build_dir, source_dirname)
+        generate_linux_vendor_dir(build_dir_path, source_dirname)
     elif operating_system == OperatingSystem.WINDOWS:
-        generate_windows_vendor_dir(build_dir, source_dirname)
+        generate_windows_vendor_dir(build_dir_path, source_dirname)
 
 
-def generate_linux_vendor_dir(build_dir: Path, source_dirname: str):
+def generate_linux_vendor_dir(build_dir_path: Path, source_dirname: str):
     """
     Generate the Linux vendor directory by installing the requirements in a Linux container.
 
-    :param build_dir: Path to the build directory.
+    :param build_dir_path: Path to the build directory.
     """
     command = _build_bash_command(
         LINUX_BUILD_VENDOR_DIR_COMMANDS.format(
             vendor_path=quote(f"{source_dirname}/vendor-linux"),
         )
     )
-    output = _run_container_with_plugin_dir(LINUX_PLUGIN_BUILDER_IMAGE, command, build_dir)
+    output = _run_container_with_plugin_dir(LINUX_PLUGIN_BUILDER_IMAGE, command, build_dir_path)
     _log_container_output(output, "Linux Vendor directory")
 
 
-def generate_windows_vendor_dir(build_dir: Path, source_dirname: str):
+def generate_windows_vendor_dir(build_dir_path: Path, source_dirname: str):
     """
     Generate the Windows vendor directory by installing the requirements in a Linux Container
     with Wine installed.
 
-    :param build_dir: Path to the build directory.
+    :param build_dir_path: Path to the build directory.
     """
     command = _build_bash_command(
         WINDOWS_BUILD_VENDOR_DIR_COMMANDS.format(source_dirname=quote(source_dirname))
     )
-    output = _run_container_with_plugin_dir(WINDOWS_PLUGIN_BUILDER_IMAGE, command, build_dir)
+    output = _run_container_with_plugin_dir(WINDOWS_PLUGIN_BUILDER_IMAGE, command, build_dir_path)
     _log_container_output(output, "Windows Vendor Directory")
 
 
@@ -187,17 +189,17 @@ def _log_container_output(container_logs: bytes, prefix: str = ""):
     logger.debug(f"{prefix} Container logs: {container_logs.decode('utf-8')}")
 
 
-def generate_requirements_file(build_dir: Path, verify_hashes: bool = True):
+def generate_requirements_file(build_dir_path: Path, verify_hashes: bool = True):
     """
     Generate the requirements file from the lock file depending on the lock file present.
 
-    :param build_dir: Path to the build directory.
+    :param build_dir_path: Path to the build directory.
     :param verify_hashes: Verify plugin's dependency hashes.
     """
     import subprocess
 
     logger.info("Generating requirements file")
-    if (build_dir / "poetry.lock").exists():
+    if (build_dir_path / "poetry.lock").exists():
         command = [
             "poetry",
             "export",
@@ -215,7 +217,7 @@ def generate_requirements_file(build_dir: Path, verify_hashes: bool = True):
             command.append("--without-hashes")
 
         process = subprocess.Popen(
-            command, cwd=str(build_dir), stdout=subprocess.PIPE, stderr=subprocess.STDOUT
+            command, cwd=str(build_dir_path), stdout=subprocess.PIPE, stderr=subprocess.STDOUT
         )
         with process.stdout as stdout:  # type: ignore [union-attr]
             for line in iter(stdout.readline, b""):
@@ -225,5 +227,5 @@ def generate_requirements_file(build_dir: Path, verify_hashes: bool = True):
         if return_code != 0:
             raise subprocess.CalledProcessError(return_code, command)
 
-    if (build_dir / "requirements.txt").exists():
+    if (build_dir_path / "requirements.txt").exists():
         logger.info("Requirements file generated")
