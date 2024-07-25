@@ -67,13 +67,13 @@ def should_use_common_vendor_dir(build_dir_path: Path, verify_hashes: bool = Tru
     command = _build_bash_command(
         LINUX_BUILD_PACKAGE_LIST_COMMANDS.format(filename=quote(LINUX_PACKAGE_LIST_FILE))
     )
-    output = _run_container_with_plugin_dir_path(LINUX_PLUGIN_BUILDER_IMAGE, command, build_dir_path)
+    output = _run_command_in_docker_container(LINUX_PLUGIN_BUILDER_IMAGE, command, build_dir_path)
     _log_container_output(output, "Linux Requirements")
 
     command = _build_bash_command(
         WINDOWS_BUILD_PACKAGE_LIST_COMMANDS.format(filename=quote(WINDOWS_PACKAGE_LIST_FILE))
     )
-    output = _run_container_with_plugin_dir_path(WINDOWS_PLUGIN_BUILDER_IMAGE, command, build_dir_path)
+    output = _run_command_in_docker_container(WINDOWS_PLUGIN_BUILDER_IMAGE, command, build_dir_path)
     _log_container_output(output, "Windows Requirements")
 
     linux_packages = _load_package_names(build_dir_path / LINUX_PACKAGE_LIST_FILE)
@@ -104,7 +104,7 @@ def _build_bash_command(command: str) -> str:
     return f"/bin/bash -l -c {quote(command)}"
 
 
-def _run_container_with_plugin_dir_path(image: str, command: str, plugin_dir_path: Path) -> bytes:
+def _run_command_in_docker_container(image: str, command: str, plugin_dir_path: Path) -> bytes:
     """
     Run a container with the plugin directory mounted.
 
@@ -136,7 +136,7 @@ def generate_common_vendor_dir(build_dir_path: Path, source_dir_name: str):
             vendor_path=quote(f"{source_dir_name}/vendor"),
         )
     )
-    output = _run_container_with_plugin_dir_path(LINUX_PLUGIN_BUILDER_IMAGE, command, build_dir_path)
+    output = _run_command_in_docker_container(LINUX_PLUGIN_BUILDER_IMAGE, command, build_dir_path)
     _log_container_output(output, "Common Vendor Directory")
 
 
@@ -167,7 +167,7 @@ def generate_linux_vendor_dir(build_dir_path: Path, source_dir_name: str):
             vendor_path=quote(f"{source_dir_name}/vendor-linux"),
         )
     )
-    output = _run_container_with_plugin_dir_path(LINUX_PLUGIN_BUILDER_IMAGE, command, build_dir_path)
+    output = _run_command_in_docker_container(LINUX_PLUGIN_BUILDER_IMAGE, command, build_dir_path)
     _log_container_output(output, "Linux Vendor directory")
 
 
@@ -181,7 +181,7 @@ def generate_windows_vendor_dir(build_dir_path: Path, source_dir_name: str):
     command = _build_bash_command(
         WINDOWS_BUILD_VENDOR_DIR_COMMANDS.format(source_dir_name=quote(source_dir_name))
     )
-    output = _run_container_with_plugin_dir_path(WINDOWS_PLUGIN_BUILDER_IMAGE, command, build_dir_path)
+    output = _run_command_in_docker_container(WINDOWS_PLUGIN_BUILDER_IMAGE, command, build_dir_path)
     _log_container_output(output, "Windows Vendor Directory")
 
 
