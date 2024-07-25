@@ -11,7 +11,7 @@ import yaml
 from monkeytypes import AgentPluginManifest
 
 from .build_options import AgentPluginBuildOptions, PlatformDependencyPackagingMethod
-from .vendor_dirs import (
+from .vendor_dir_generation import (
     generate_common_vendor_dir,
     generate_requirements_file,
     generate_vendor_dirs,
