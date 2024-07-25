@@ -6,7 +6,7 @@ from monkeytypes import AgentPluginManifest
 
 from .agent_plugin_build_options import SourceDirName, parse_agent_plugin_build_options
 from .agent_plugin_builder_arguments import ARGUMENTS, CustomArgumentsFormatter
-from .build_plugin import build_agent_plugin, get_agent_plugin_manifest
+from .build_agent_plugin import build_agent_plugin, get_agent_plugin_manifest
 from .setup_build_plugin_logging import add_file_handler, reset_logger, setup_logging
 
 logger = logging.getLogger(__name__)

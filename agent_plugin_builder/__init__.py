@@ -6,7 +6,7 @@ from .vendor_dir_generation import (
     should_use_common_vendor_dir,
     generate_requirements_file,
 )
-from .build_plugin import (
+from .build_agent_plugin import (
     build_agent_plugin,
     get_agent_plugin_manifest,
     create_agent_plugin_archive,
