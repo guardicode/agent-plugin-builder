@@ -38,7 +38,7 @@ class CustomArgumentsFormatter(ArgumentDefaultsHelpFormatter, RawTextHelpFormatt
 
 ARGUMENTS: list[dict[str, Any]] = [
     {
-        "name": ["plugin_path"],
+        "name": ["plugin_dir_path"],
         "kwargs": {
             "metavar": "PLUGIN_PATH",
             "type": Path,

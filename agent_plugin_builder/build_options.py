@@ -19,7 +19,7 @@ class PlatformDependencyPackagingMethod(Enum):
 
 
 class AgentPluginBuildOptions(InfectionMonkeyBaseModel):
-    plugin_path: Annotated[
+    plugin_dir_path: Annotated[
         Path,
         Field(
             title="The path to the plugin code directory.",

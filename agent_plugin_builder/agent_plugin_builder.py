@@ -19,7 +19,7 @@ def main():
     args = parser.parse_args()
     _setup_logging(args.verbosity)
     _log_arguments(args)
-    agent_plugin_manifest = get_agent_plugin_manifest(args.plugin_path)
+    agent_plugin_manifest = get_agent_plugin_manifest(args.plugin_dir_path)
     source_dir = _get_source_dir(args.source_dir, agent_plugin_manifest)
     args.source_dir = source_dir
     agent_plugin_build_options = parse_agent_plugin_build_options(args)

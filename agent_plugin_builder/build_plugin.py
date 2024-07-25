@@ -43,10 +43,10 @@ def build_agent_plugin(
     :raises shutil.Error: If there is an error preparing the build directory.
     """
 
-    if not agent_plugin_build_options.plugin_path.exists():
-        logger.error(f"Plugin path {agent_plugin_build_options.plugin_path} does not exist")
+    if not agent_plugin_build_options.plugin_dir_path.exists():
+        logger.error(f"Plugin path {agent_plugin_build_options.plugin_dir_path} does not exist")
         raise FileNotFoundError(
-            f"Plugin path {agent_plugin_build_options.plugin_path} does not exist"
+            f"Plugin path {agent_plugin_build_options.plugin_dir_path} does not exist"
         )
 
     if agent_plugin_build_options.build_dir_path.exists():
@@ -62,18 +62,18 @@ def build_agent_plugin(
     try:
         logger.info(
             "Copying plugin code to build directory: "
-            f"{agent_plugin_build_options.plugin_path} -> "
+            f"{agent_plugin_build_options.plugin_dir_path} -> "
             f"{agent_plugin_build_options.build_dir_path}"
         )
         shutil.copytree(
-            agent_plugin_build_options.plugin_path,
+            agent_plugin_build_options.plugin_dir_path,
             agent_plugin_build_options.build_dir_path,
             dirs_exist_ok=True,
         )
     except shutil.Error as err:
         logger.error(
             "Unable to copy plugin code to build directory: "
-            f"{agent_plugin_build_options.plugin_path} -> "
+            f"{agent_plugin_build_options.plugin_dir_path} -> "
             f"{agent_plugin_build_options.build_dir_path}"
         )
         raise err
