@@ -1,21 +1,16 @@
 import logging
-from enum import Enum
 from pathlib import Path
 from typing import Annotated
 
 from monkeytypes.base_models import InfectionMonkeyBaseModel
 from pydantic import Field
 
+from .platform_dependency_packaging_method import PlatformDependencyPackagingMethod
+
 BUILD = "build"
 DIST = "dist"
 
 logger = logging.getLogger(__name__)
-
-
-class PlatformDependencyPackagingMethod(Enum):
-    COMMON = "common"
-    SEPARATE = "separate"
-    AUTODETECT = "autodetect"
 
 
 class AgentPluginBuildOptions(InfectionMonkeyBaseModel):

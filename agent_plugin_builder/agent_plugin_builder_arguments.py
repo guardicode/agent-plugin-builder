@@ -2,7 +2,8 @@ from argparse import ArgumentDefaultsHelpFormatter, BooleanOptionalAction, RawTe
 from pathlib import Path
 from typing import Any
 
-from .build_options import BUILD, DIST, PlatformDependencyPackagingMethod
+from .build_options import BUILD, DIST
+from .platform_dependency_packaging_method import PlatformDependencyPackagingMethod
 
 SOURCE_DIR_METAVAR = "SOURCE_DIR_NAME"
 PLATFORM_DEPENDENCIES_METAVAR = "PLATFORM_DEPENDENCIES"

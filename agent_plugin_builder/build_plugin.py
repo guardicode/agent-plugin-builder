@@ -10,7 +10,8 @@ from typing import Callable
 import yaml
 from monkeytypes import AgentPluginManifest
 
-from .build_options import AgentPluginBuildOptions, PlatformDependencyPackagingMethod
+from .build_options import AgentPluginBuildOptions
+from .platform_dependency_packaging_method import PlatformDependencyPackagingMethod
 from .vendor_dir_generation import (
     generate_common_vendor_dir,
     generate_requirements_file,
