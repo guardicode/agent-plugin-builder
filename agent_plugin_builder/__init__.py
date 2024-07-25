@@ -1,7 +1,5 @@
 from .platform_dependency_packaging_method import PlatformDependencyPackagingMethod
-from .build_options import (
-    AgentPluginBuildOptions,
-)
+from .agent_plugin_build_options import AgentPluginBuildOptions
 from .vendor_dir_generation import (
     generate_common_vendor_dir,
     generate_vendor_dirs,

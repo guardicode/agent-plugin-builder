@@ -1,10 +1,11 @@
 import logging
 from argparse import ArgumentParser
+from pathlib import Path
 
 from monkeytypes import AgentPluginManifest
 
+from .agent_plugin_build_options import SourceDirName, parse_agent_plugin_build_options
 from .agent_plugin_builder_arguments import ARGUMENTS, CustomArgumentsFormatter
-from .build_options import parse_agent_plugin_build_options
 from .build_plugin import build_agent_plugin, get_agent_plugin_manifest
 from .setup_build_plugin_logging import add_file_handler, reset_logger, setup_logging
 
@@ -19,9 +20,12 @@ def main():
     args = parser.parse_args()
     _setup_logging(args.verbosity)
     _log_arguments(args)
+
     agent_plugin_manifest = get_agent_plugin_manifest(args.plugin_dir_path)
     source_dir_name = _get_source_dir_name(args.source_dir_name, agent_plugin_manifest)
     args.source_dir_name = source_dir_name
+
+    _create_build_dirs(Path(args.build_dir_path), Path(args.dist_dir_path))
     agent_plugin_build_options = parse_agent_plugin_build_options(args)
     try:
         build_agent_plugin(
@@ -31,6 +35,16 @@ def main():
         )
     except Exception as e:
         logger.error(f"Error building plugin: {e}", exc_info=True)
+
+
+def _create_build_dirs(build_dir_path: Path, dist_dir_path: Path):
+    if not dist_dir_path.exists():
+        logger.info(f"Creating dist directory: {dist_dir_path}")
+        dist_dir_path.mkdir(exist_ok=True)
+
+    if not build_dir_path.exists():
+        logger.info(f"Creating build directory: {build_dir_path}")
+        build_dir_path.mkdir(exist_ok=True)
 
 
 def _log_arguments(args):
@@ -44,7 +58,7 @@ def _setup_logging(verbosity):
 
 
 def _get_source_dir_name(
-    source_dir_name: str | None, agent_plugin_manifest: AgentPluginManifest
+    source_dir_name: SourceDirName | None, agent_plugin_manifest: AgentPluginManifest
 ) -> str:
     if source_dir_name is not None:
         return source_dir_name

@@ -10,7 +10,7 @@ from typing import Callable
 import yaml
 from monkeytypes import AgentPluginManifest
 
-from .build_options import AgentPluginBuildOptions
+from .agent_plugin_build_options import AgentPluginBuildOptions, SourceDirName
 from .platform_dependency_packaging_method import PlatformDependencyPackagingMethod
 from .vendor_dir_generation import (
     generate_common_vendor_dir,
@@ -186,7 +186,7 @@ def generate_vendor_directories(
 
 
 def generate_plugin_config_schema(
-    build_dir_path: Path, source_dir_name: str, agent_plugin_manifest: AgentPluginManifest
+    build_dir_path: Path, source_dir_name: SourceDirName, agent_plugin_manifest: AgentPluginManifest
 ):
     """
     Generate the config-schema file for the plugin. The schema is generated
@@ -221,7 +221,7 @@ def generate_plugin_config_schema(
         f.write(schema_contents)
 
 
-def create_source_archive(build_dir_path: Path, source_dir_name: str) -> Path:
+def create_source_archive(build_dir_path: Path, source_dir_name: SourceDirName) -> Path:
     """
     Create the source archive for the plugin.
 

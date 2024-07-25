@@ -9,6 +9,8 @@ from monkeytypes import OperatingSystem
 
 import docker
 
+from .agent_plugin_build_options import SourceDirName
+
 logger = logging.getLogger(__name__)
 
 LINUX_PLUGIN_BUILDER_IMAGE: Final = "infectionmonkey/agent-builder:latest"
@@ -124,7 +126,7 @@ def _run_command_in_docker_container(image: str, command: str, plugin_dir_path: 
     )
 
 
-def generate_common_vendor_dir(build_dir_path: Path, source_dir_name: str):
+def generate_common_vendor_dir(build_dir_path: Path, source_dir_name: SourceDirName):
     """
     Generate a common vendor directory by installing the requirements in a Linux container.
 
@@ -141,7 +143,7 @@ def generate_common_vendor_dir(build_dir_path: Path, source_dir_name: str):
 
 
 def generate_vendor_dirs(
-    build_dir_path: Path, source_dir_name: str, operating_system: OperatingSystem
+    build_dir_path: Path, source_dir_name: SourceDirName, operating_system: OperatingSystem
 ):
     """
     Generate the vendor directories for the plugin.
@@ -156,7 +158,7 @@ def generate_vendor_dirs(
         generate_windows_vendor_dir(build_dir_path, source_dir_name)
 
 
-def generate_linux_vendor_dir(build_dir_path: Path, source_dir_name: str):
+def generate_linux_vendor_dir(build_dir_path: Path, source_dir_name: SourceDirName):
     """
     Generate the Linux vendor directory by installing the requirements in a Linux container.
 
@@ -171,7 +173,7 @@ def generate_linux_vendor_dir(build_dir_path: Path, source_dir_name: str):
     _log_container_output(output, "Linux Vendor directory")
 
 
-def generate_windows_vendor_dir(build_dir_path: Path, source_dir_name: str):
+def generate_windows_vendor_dir(build_dir_path: Path, source_dir_name: SourceDirName):
     """
     Generate the Windows vendor directory by installing the requirements in a Linux Container
     with Wine installed.

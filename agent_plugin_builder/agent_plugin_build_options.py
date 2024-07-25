@@ -1,9 +1,10 @@
 import logging
+from argparse import Namespace
 from pathlib import Path
 from typing import Annotated
 
 from monkeytypes.base_models import InfectionMonkeyBaseModel
-from pydantic import Field
+from pydantic import DirectoryPath, Field, StringConstraints
 
 from .platform_dependency_packaging_method import PlatformDependencyPackagingMethod
 
@@ -12,30 +13,35 @@ DIST = "dist"
 
 logger = logging.getLogger(__name__)
 
+SourceDirName = Annotated[
+    str,
+    StringConstraints(strip_whitespace=True, pattern=r"^[a-zA-Z0-9_]+$"),
+]
+
 
 class AgentPluginBuildOptions(InfectionMonkeyBaseModel):
     plugin_dir_path: Annotated[
-        Path,
+        DirectoryPath,
         Field(
             title="The path to the plugin code directory.",
         ),
     ]
     build_dir_path: Annotated[
-        Path,
+        DirectoryPath,
         Field(
             title="The path to the build directory.",
             default_factory=lambda: Path.cwd() / BUILD,
         ),
     ]
     dist_dir_path: Annotated[
-        Path,
+        DirectoryPath,
         Field(
             title="The path to the dist directory.",
             default_factory=lambda: Path.cwd() / DIST,
         ),
     ]
     source_dir_name: Annotated[
-        str,
+        SourceDirName,
         Field(
             title="The name of the source directory.",
         ),
@@ -69,7 +75,7 @@ class AgentPluginBuildOptions(InfectionMonkeyBaseModel):
     ]
 
 
-def parse_agent_plugin_build_options(args) -> AgentPluginBuildOptions:
+def parse_agent_plugin_build_options(args: Namespace) -> AgentPluginBuildOptions:
     """
     Validate the arguments passed to the agent plugin builder
 
