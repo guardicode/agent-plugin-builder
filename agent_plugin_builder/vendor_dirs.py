@@ -53,7 +53,7 @@ WINDOWS_BUILD_VENDOR_DIR_COMMANDS: Final = " && ".join(
 )
 
 
-def check_if_common_vendor_dir_possible(build_dir_path: Path, verify_hashes: bool = True) -> bool:
+def should_use_common_vendor_dir(build_dir_path: Path, verify_hashes: bool = True) -> bool:
     """
     Check if a common vendor directory is possible by comparing the package lists generated
     from a dry run of the requirements installation on Linux and Windows.

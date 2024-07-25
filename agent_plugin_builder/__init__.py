@@ -1,12 +1,11 @@
 from .build_options import (
     AgentPluginBuildOptions,
     PlatformDependencyPackagingMethod,
-    parse_agent_plugin_build_options,
 )
 from .vendor_dirs import (
     generate_common_vendor_dir,
     generate_vendor_dirs,
-    check_if_common_vendor_dir_possible,
+    should_use_common_vendor_dir,
     generate_requirements_file,
 )
 from .build_plugin import (

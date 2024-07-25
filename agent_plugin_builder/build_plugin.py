@@ -12,10 +12,10 @@ from monkeytypes import AgentPluginManifest
 
 from .build_options import AgentPluginBuildOptions, PlatformDependencyPackagingMethod
 from .vendor_dirs import (
-    check_if_common_vendor_dir_possible,
     generate_common_vendor_dir,
     generate_requirements_file,
     generate_vendor_dirs,
+    should_use_common_vendor_dir,
 )
 
 logger = logging.getLogger(__name__)
@@ -167,7 +167,7 @@ def generate_vendor_directories(
             )
     else:
         if len(agent_plugin_manifest.supported_operating_systems) > 1:
-            common_dir_possible = check_if_common_vendor_dir_possible(
+            common_dir_possible = should_use_common_vendor_dir(
                 agent_plugin_build_options.build_dir_path, agent_plugin_build_options.verify_hashes
             )
             if common_dir_possible:
