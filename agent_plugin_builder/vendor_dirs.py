@@ -76,8 +76,8 @@ def check_if_common_vendor_dir_possible(build_dir: Path, verify_hashes: bool = T
     output = _run_container_with_plugin_dir(WINDOWS_PLUGIN_BUILDER_IMAGE, command, build_dir)
     _log_container_output(output, "Windows Requirements")
 
-    linux_packages = load_package_names(build_dir / LINUX_PACKAGE_LIST_FILE)
-    windows_packages = load_package_names(build_dir / WINDOWS_PACKAGE_LIST_FILE)
+    linux_packages = _load_package_names(build_dir / LINUX_PACKAGE_LIST_FILE)
+    windows_packages = _load_package_names(build_dir / WINDOWS_PACKAGE_LIST_FILE)
 
     response = linux_packages == windows_packages
     if response:
@@ -88,9 +88,9 @@ def check_if_common_vendor_dir_possible(build_dir: Path, verify_hashes: bool = T
     return response
 
 
-def load_package_names(file_path: Path) -> set[str]:
+def _load_package_names(file_path: Path) -> set[str]:
     """
-    Load the package names from a pip installation report file.
+    Load the Plugin's packages names from a pip installation report file.
 
     :param file_path: Path to the report file.
     :return: Set of package names.
