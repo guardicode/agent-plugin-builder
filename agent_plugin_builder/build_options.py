@@ -39,7 +39,7 @@ class AgentPluginBuildOptions(InfectionMonkeyBaseModel):
             default_factory=lambda: Path.cwd() / DIST,
         ),
     ]
-    source_dir: Annotated[
+    source_dir_name: Annotated[
         str,
         Field(
             title="The name of the source directory.",

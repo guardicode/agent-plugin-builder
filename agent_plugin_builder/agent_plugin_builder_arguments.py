@@ -4,7 +4,7 @@ from typing import Any
 
 from .build_options import BUILD, DIST, PlatformDependencyPackagingMethod
 
-SOURCE_DIR_METAVAR = "SOURCE_DIR"
+SOURCE_DIR_METAVAR = "SOURCE_DIR_NAME"
 PLATFORM_DEPENDENCIES_METAVAR = "PLATFORM_DEPENDENCIES"
 HASHES_METAVAR = "HASHES"
 VERBOSITY_DEST = "verbosity"
@@ -64,7 +64,7 @@ ARGUMENTS: list[dict[str, Any]] = [
         },
     },
     {
-        "name": ["-s", "--source-dir"],
+        "name": ["-s", "--source-dir-name"],
         "kwargs": {
             "metavar": SOURCE_DIR_METAVAR,
             "type": str,

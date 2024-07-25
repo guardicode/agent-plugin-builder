@@ -20,8 +20,8 @@ def main():
     _setup_logging(args.verbosity)
     _log_arguments(args)
     agent_plugin_manifest = get_agent_plugin_manifest(args.plugin_dir_path)
-    source_dir = _get_source_dir(args.source_dir, agent_plugin_manifest)
-    args.source_dir = source_dir
+    source_dir_name = _get_source_dir_name(args.source_dir_name, agent_plugin_manifest)
+    args.source_dir_name = source_dir_name
     agent_plugin_build_options = parse_agent_plugin_build_options(args)
     try:
         build_agent_plugin(
@@ -43,7 +43,9 @@ def _setup_logging(verbosity):
     setup_logging(verbosity)
 
 
-def _get_source_dir(source_dir: str | None, agent_plugin_manifest: AgentPluginManifest) -> str:
-    if source_dir is not None:
-        return source_dir
+def _get_source_dir_name(
+    source_dir_name: str | None, agent_plugin_manifest: AgentPluginManifest
+) -> str:
+    if source_dir_name is not None:
+        return source_dir_name
     return f"{agent_plugin_manifest.name}_{agent_plugin_manifest.plugin_type.value}".lower()

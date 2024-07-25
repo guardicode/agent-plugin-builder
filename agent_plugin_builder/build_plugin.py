@@ -118,11 +118,11 @@ def create_agent_plugin_archive(
     )
     generate_plugin_config_schema(
         agent_plugin_build_options.build_dir_path,
-        agent_plugin_build_options.source_dir,
+        agent_plugin_build_options.source_dir_name,
         agent_plugin_manifest,
     )
     create_source_archive(
-        agent_plugin_build_options.build_dir_path, agent_plugin_build_options.source_dir
+        agent_plugin_build_options.build_dir_path, agent_plugin_build_options.source_dir_name
     )
     plugin_archive = create_plugin_archive(
         agent_plugin_build_options.build_dir_path, agent_plugin_manifest
@@ -153,7 +153,7 @@ def generate_vendor_directories(
     )
     if agent_plugin_build_options.platform_dependencies == PlatformDependencyPackagingMethod.COMMON:
         generate_common_vendor_dir(
-            agent_plugin_build_options.build_dir_path, agent_plugin_build_options.source_dir
+            agent_plugin_build_options.build_dir_path, agent_plugin_build_options.source_dir_name
         )
     elif (
         agent_plugin_build_options.platform_dependencies
@@ -162,7 +162,7 @@ def generate_vendor_directories(
         for os_type in agent_plugin_manifest.supported_operating_systems:
             generate_vendor_dirs(
                 agent_plugin_build_options.build_dir_path,
-                agent_plugin_build_options.source_dir,
+                agent_plugin_build_options.source_dir_name,
                 os_type,
             )
     else:
@@ -172,30 +172,31 @@ def generate_vendor_directories(
             )
             if common_dir_possible:
                 generate_common_vendor_dir(
-                    agent_plugin_build_options.build_dir_path, agent_plugin_build_options.source_dir
+                    agent_plugin_build_options.build_dir_path,
+                    agent_plugin_build_options.source_dir_name,
                 )
             else:
                 for os_type in agent_plugin_manifest.supported_operating_systems:
                     generate_vendor_dirs(
                         agent_plugin_build_options.build_dir_path,
-                        agent_plugin_build_options.source_dir,
+                        agent_plugin_build_options.source_dir_name,
                         os_type,
                     )
 
 
 def generate_plugin_config_schema(
-    build_dir_path: Path, source_dirname: str, agent_plugin_manifest: AgentPluginManifest
+    build_dir_path: Path, source_dir_name: str, agent_plugin_manifest: AgentPluginManifest
 ):
     """
     Generate the config-schema file for the plugin. The schema is generated
     based on the plugin's options model.
 
     :param build_dir_path: Path to the build directory.
-    :param source_dirname: Name of the plugin source directory.
+    :param source_dir_name: Name of the plugin source directory.
     :param agent_plugin_manifest: Agent Plugin manifest.
     """
     plugin_options_file_path = (
-        build_dir_path / source_dirname / f"{agent_plugin_manifest.name.lower()}_options.py"
+        build_dir_path / source_dir_name / f"{agent_plugin_manifest.name.lower()}_options.py"
     )
     plugin_config_schema_file_path = build_dir_path / CONFIG_SCHEMA
     plugin_options_model_name = f"{agent_plugin_manifest.name}Options"
@@ -209,7 +210,7 @@ def generate_plugin_config_schema(
         plugin_options_filename = plugin_options_file_path.stem
         import sys
 
-        sys.path.append(str(build_dir_path / source_dirname))
+        sys.path.append(str(build_dir_path / source_dir_name))
         options = getattr(import_module(plugin_options_filename), plugin_options_model_name)
         config_schema = {"properties": options.model_json_schema()["properties"]}
 
@@ -219,16 +220,16 @@ def generate_plugin_config_schema(
         f.write(schema_contents)
 
 
-def create_source_archive(build_dir_path: Path, source_dirname: str) -> Path:
+def create_source_archive(build_dir_path: Path, source_dir_name: str) -> Path:
     """
     Create the source archive for the plugin.
 
     :param build_dir_path: Path to the build directory.
-    :param source_dirname: Name of the plugin source directory.
+    :param source_dir_name: Name of the plugin source directory.
     :return: Path to the source archive.
     """
     source_archive = build_dir_path / f"{SOURCE}.tar.gz"
-    source_build_dir_path = build_dir_path / source_dirname
+    source_build_dir_path = build_dir_path / source_dir_name
 
     logger.info(f"Creating source archive: {source_archive} ")
     with tarfile.open(str(source_archive), "w:gz") as tar:

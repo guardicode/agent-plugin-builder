@@ -48,7 +48,7 @@ WINDOWS_BUILD_VENDOR_DIR_COMMANDS: Final = " && ".join(
     [
         WINDOWS_IMAGE_INIT_COMMAND,
         "cd /plugin",
-        "wine pip install -r requirements.txt -t {source_dirname}/vendor-windows",
+        "wine pip install -r requirements.txt -t {source_dir_name}/vendor-windows",
     ]
 )
 
@@ -124,16 +124,16 @@ def _run_container_with_plugin_dir_path(image: str, command: str, plugin_dir_pat
     )
 
 
-def generate_common_vendor_dir(build_dir_path: Path, source_dirname: str):
+def generate_common_vendor_dir(build_dir_path: Path, source_dir_name: str):
     """
     Generate a common vendor directory by installing the requirements in a Linux container.
 
     :param build_dir_path: Path to the build directory.
-    :param source_dirname: Name of the source directory.
+    :param source_dir_name: Name of the source directory.
     """
     command = _build_bash_command(
         LINUX_BUILD_VENDOR_DIR_COMMANDS.format(
-            vendor_path=quote(f"{source_dirname}/vendor"),
+            vendor_path=quote(f"{source_dir_name}/vendor"),
         )
     )
     output = _run_container_with_plugin_dir_path(LINUX_PLUGIN_BUILDER_IMAGE, command, build_dir_path)
@@ -141,22 +141,22 @@ def generate_common_vendor_dir(build_dir_path: Path, source_dirname: str):
 
 
 def generate_vendor_dirs(
-    build_dir_path: Path, source_dirname: str, operating_system: OperatingSystem
+    build_dir_path: Path, source_dir_name: str, operating_system: OperatingSystem
 ):
     """
     Generate the vendor directories for the plugin.
 
     :param build_dir_path: Path to the build directory.
-    :param source_dirname: Name of the source directory.
+    :param source_dir_name: Name of the source directory.
     :param operating_system: Operating system to generate the vendor directories for.
     """
     if operating_system == OperatingSystem.LINUX:
-        generate_linux_vendor_dir(build_dir_path, source_dirname)
+        generate_linux_vendor_dir(build_dir_path, source_dir_name)
     elif operating_system == OperatingSystem.WINDOWS:
-        generate_windows_vendor_dir(build_dir_path, source_dirname)
+        generate_windows_vendor_dir(build_dir_path, source_dir_name)
 
 
-def generate_linux_vendor_dir(build_dir_path: Path, source_dirname: str):
+def generate_linux_vendor_dir(build_dir_path: Path, source_dir_name: str):
     """
     Generate the Linux vendor directory by installing the requirements in a Linux container.
 
@@ -164,14 +164,14 @@ def generate_linux_vendor_dir(build_dir_path: Path, source_dirname: str):
     """
     command = _build_bash_command(
         LINUX_BUILD_VENDOR_DIR_COMMANDS.format(
-            vendor_path=quote(f"{source_dirname}/vendor-linux"),
+            vendor_path=quote(f"{source_dir_name}/vendor-linux"),
         )
     )
     output = _run_container_with_plugin_dir_path(LINUX_PLUGIN_BUILDER_IMAGE, command, build_dir_path)
     _log_container_output(output, "Linux Vendor directory")
 
 
-def generate_windows_vendor_dir(build_dir_path: Path, source_dirname: str):
+def generate_windows_vendor_dir(build_dir_path: Path, source_dir_name: str):
     """
     Generate the Windows vendor directory by installing the requirements in a Linux Container
     with Wine installed.
@@ -179,7 +179,7 @@ def generate_windows_vendor_dir(build_dir_path: Path, source_dirname: str):
     :param build_dir_path: Path to the build directory.
     """
     command = _build_bash_command(
-        WINDOWS_BUILD_VENDOR_DIR_COMMANDS.format(source_dirname=quote(source_dirname))
+        WINDOWS_BUILD_VENDOR_DIR_COMMANDS.format(source_dir_name=quote(source_dir_name))
     )
     output = _run_container_with_plugin_dir_path(WINDOWS_PLUGIN_BUILDER_IMAGE, command, build_dir_path)
     _log_container_output(output, "Windows Vendor Directory")

@@ -33,7 +33,7 @@ where:
         -d/--dist-dir-path: The path where resulting Agent Plugin archive will be stored.
         Default: <current_working_directory>/dist
 
-        -s/--source-dir: The name of the source directory.
+        -s/--source-dir-name: The name of the source directory.
         Default: <plugin_name>_<plugin_type>
 
         -pd/--platform-dependencies: The platform dependencies for the Agent Plugin.
