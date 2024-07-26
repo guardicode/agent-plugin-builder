@@ -73,3 +73,9 @@ Run the following commands to install the necessary prerequisites:
     pip install poetry pre-commit
     poetry install
     pre-commit install -t pre-commit -t prepare-commit-msg
+
+### Running unit tests
+
+To run automated tests, invoke:
+
+    poetry run pytest
