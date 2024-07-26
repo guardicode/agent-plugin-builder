@@ -5,6 +5,7 @@ from .vendor_dir_generation import (
     generate_vendor_dirs,
     should_use_common_vendor_dir,
     generate_requirements_file,
+    generate_windows_vendor_dir,
 )
 from .build_agent_plugin import (
     build_agent_plugin,

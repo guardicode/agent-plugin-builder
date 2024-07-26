@@ -3,7 +3,7 @@ import logging
 from os import getgid, getuid
 from pathlib import Path
 from shlex import quote
-from typing import Final
+from typing import Final, Sequence
 
 from monkeytypes import OperatingSystem
 
@@ -12,6 +12,13 @@ import docker
 from .agent_plugin_build_options import SourceDirName
 
 logger = logging.getLogger(__name__)
+
+
+class CommandRunError(Exception):
+    """Raised when a command fails to run."""
+
+    pass
+
 
 LINUX_PLUGIN_BUILDER_IMAGE: Final = "infectionmonkey/agent-builder:latest"
 WINDOWS_PLUGIN_BUILDER_IMAGE: Final = "infectionmonkey/plugin-builder:latest"
@@ -55,16 +62,17 @@ WINDOWS_BUILD_VENDOR_DIR_COMMANDS: Final = " && ".join(
 )
 
 
-def should_use_common_vendor_dir(build_dir_path: Path, verify_hashes: bool = True) -> bool:
+def should_use_common_vendor_dir(build_dir_path: Path) -> bool:
     """
     Check if a common vendor directory is possible by comparing the package lists generated
     from a dry run of the requirements installation on Linux and Windows.
 
     :param build_dir_path: Path to the build directory.
-    :param verify_hashes: Include hashes in the requirements file.
     :return: True if a common vendor directory is possible, False otherwise.
+    :raises FileNotFoundError: If the requirements file is not found.
     """
-    generate_requirements_file(build_dir_path, verify_hashes)
+    if not (build_dir_path / "requirements.txt").exists():
+        raise FileNotFoundError("requirements.txt not found in the build directory")
 
     command = _build_bash_command(
         LINUX_BUILD_PACKAGE_LIST_COMMANDS.format(filename=quote(LINUX_PACKAGE_LIST_FILE))
@@ -126,22 +134,6 @@ def _run_command_in_docker_container(image: str, command: str, plugin_dir_path: 
     )
 
 
-def generate_common_vendor_dir(build_dir_path: Path, source_dir_name: SourceDirName):
-    """
-    Generate a common vendor directory by installing the requirements in a Linux container.
-
-    :param build_dir_path: Path to the build directory.
-    :param source_dir_name: Name of the source directory.
-    """
-    command = _build_bash_command(
-        LINUX_BUILD_VENDOR_DIR_COMMANDS.format(
-            vendor_path=quote(f"{source_dir_name}/vendor"),
-        )
-    )
-    output = _run_command_in_docker_container(LINUX_PLUGIN_BUILDER_IMAGE, command, build_dir_path)
-    _log_container_output(output, "Common Vendor Directory")
-
-
 def generate_vendor_dirs(
     build_dir_path: Path, source_dir_name: SourceDirName, operating_system: OperatingSystem
 ):
@@ -153,24 +145,30 @@ def generate_vendor_dirs(
     :param operating_system: Operating system to generate the vendor directories for.
     """
     if operating_system == OperatingSystem.LINUX:
-        generate_linux_vendor_dir(build_dir_path, source_dir_name)
+        generate_common_vendor_dir(build_dir_path, source_dir_name, "vendor-linux")
     elif operating_system == OperatingSystem.WINDOWS:
         generate_windows_vendor_dir(build_dir_path, source_dir_name)
+    else:
+        raise ValueError(f"Unsupported operating system: {operating_system}")
 
 
-def generate_linux_vendor_dir(build_dir_path: Path, source_dir_name: SourceDirName):
+def generate_common_vendor_dir(
+    build_dir_path: Path, source_dir_name: SourceDirName, vendor_dir_name: str = "vendor"
+):
     """
-    Generate the Linux vendor directory by installing the requirements in a Linux container.
+    Generate a common vendor directory by installing the requirements in a Linux container.
 
     :param build_dir_path: Path to the build directory.
+    :param source_dir_name: Name of the source directory.
+    :param vendor_dir_name: Name of the vendor directory.
     """
     command = _build_bash_command(
         LINUX_BUILD_VENDOR_DIR_COMMANDS.format(
-            vendor_path=quote(f"{source_dir_name}/vendor-linux"),
+            vendor_path=quote(f"{source_dir_name}/{vendor_dir_name}"),
         )
     )
     output = _run_command_in_docker_container(LINUX_PLUGIN_BUILDER_IMAGE, command, build_dir_path)
-    _log_container_output(output, "Linux Vendor directory")
+    _log_container_output(output, "Common Vendor Directory")
 
 
 def generate_windows_vendor_dir(build_dir_path: Path, source_dir_name: SourceDirName):
@@ -197,9 +195,9 @@ def generate_requirements_file(build_dir_path: Path, verify_hashes: bool = True)
 
     :param build_dir_path: Path to the build directory.
     :param verify_hashes: Verify plugin's dependency hashes.
+    :raises FileNotFoundError: If the lock or requierements file is not found.
+    :raises CommandRunError: If the command fails to run.
     """
-    import subprocess
-
     logger.info("Generating requirements file")
     if (build_dir_path / "poetry.lock").exists():
         command = [
@@ -218,16 +216,36 @@ def generate_requirements_file(build_dir_path: Path, verify_hashes: bool = True)
             )
             command.append("--without-hashes")
 
-        process = subprocess.Popen(
-            command, cwd=str(build_dir_path), stdout=subprocess.PIPE, stderr=subprocess.STDOUT
-        )
-        with process.stdout as stdout:  # type: ignore [union-attr]
-            for line in iter(stdout.readline, b""):
-                logger.debug(line.decode("utf-8").strip())
-
-        return_code = process.wait()
+        return_code = _run_command(build_dir_path, command)
         if return_code != 0:
-            raise subprocess.CalledProcessError(return_code, command)
+            logger.error("Requirements file generation failed")
+            raise CommandRunError("Requirements file generation failed")
+    else:
+        logger.warning("Poetry lock file not found")
+        raise FileNotFoundError("poetry.lock not found")
 
     if (build_dir_path / "requirements.txt").exists():
         logger.info("Requirements file generated")
+    else:
+        logger.error("Requirements file not generated")
+        raise FileNotFoundError("requirements.txt not found in the build directory")
+
+
+def _run_command(build_dir_path: Path, command: Sequence[str]):
+    """
+    Run a command in the shell.
+
+    :param build_dir_path: Path to the build directory.
+    :param command: Command to run.
+    """
+    import subprocess
+
+    logger.debug(f"Running command: {' '.join(command)}")
+    process = subprocess.Popen(
+        command, cwd=str(build_dir_path), stdout=subprocess.PIPE, stderr=subprocess.STDOUT
+    )
+    with process.stdout as stdout:  # type: ignore [union-attr]
+        for line in iter(stdout.readline, b""):
+            logger.debug(line.decode("utf-8").strip())
+
+    return process.wait()
