@@ -99,6 +99,7 @@ def generate_vendor_directories(
                 os_type,
             )
     else:
+        # TODO: Fix this logic to handle the case where the plugin supports just one OS
         if len(agent_plugin_manifest.supported_operating_systems) > 1:
             common_dir_possible = should_use_common_vendor_dir(
                 agent_plugin_build_options.build_dir_path

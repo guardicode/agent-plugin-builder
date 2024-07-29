@@ -2,11 +2,14 @@ from pathlib import Path
 from unittest.mock import MagicMock
 
 import pytest
-from monkeytypes import OperatingSystem
+from monkeytypes import AgentPluginManifest, AgentPluginType, OperatingSystem
 
 from agent_plugin_builder import (
+    AgentPluginBuildOptions,
+    PlatformDependencyPackagingMethod,
     generate_common_vendor_dir,
     generate_requirements_file,
+    generate_vendor_directories,
     generate_vendor_dirs,
     generate_windows_vendor_dir,
     should_use_common_vendor_dir,
@@ -28,6 +31,44 @@ WINDOWS_PACKAGES_DIFF = {"package1", "package2", "package4"}
 BUILD_DIR_PATH = Path("/non_existing/build/dir")
 LINUX_PACKAGE_FILE_PATH = BUILD_DIR_PATH / "linux_packages.json"
 WINDOWS_PACKAGE_FILE_PATH = BUILD_DIR_PATH / "windows_packages.json"
+
+
+@pytest.fixture
+def get_agent_plugin_build_options(tmpdir):
+    temp_dir = Path(tmpdir)
+    plugin_dir_path = temp_dir / "plugin_dir_path"
+    plugin_dir_path.mkdir()
+    build_dir_path = temp_dir / "build_dir_path"
+    build_dir_path.mkdir()
+    dist_dir_path = temp_dir / "dist_dir_path"
+    dist_dir_path.mkdir()
+
+    def make_agent_plugin_build_options(platform_dependencies):
+        return AgentPluginBuildOptions(
+            plugin_dir_path=plugin_dir_path,
+            build_dir_path=build_dir_path,
+            dist_dir_path=dist_dir_path,
+            source_dir_name="source_dir_name",
+            platform_dependencies=platform_dependencies,
+            verify_hashes=False,
+        )
+
+    return make_agent_plugin_build_options
+
+
+@pytest.fixture
+def agent_plugin_manifest():
+    return AgentPluginManifest(
+        name="plugin_name",
+        plugin_type=AgentPluginType.EXPLOITER,
+        supported_operating_systems=(OperatingSystem.WINDOWS, OperatingSystem.LINUX),
+        target_operating_systems=(OperatingSystem.WINDOWS, OperatingSystem.LINUX),
+        title="plugin_title",
+        version="1.0.0",
+        description="plugin_description",
+        link_to_documentation="https://plugin_documentation.com",
+        safe=True,
+    )
 
 
 @pytest.fixture
@@ -103,6 +144,128 @@ def write_poetry_lock(tmpdir, data_for_tests_dir):
         return build_dir_path
 
     return inner
+
+
+def test_generate_vendor_directories__common_dependencies(
+    monkeypatch, get_agent_plugin_build_options, agent_plugin_manifest
+):
+    mock_generate_requirements_file = MagicMock()
+    monkeypatch.setattr(
+        "agent_plugin_builder.vendor_dir_generation.generate_requirements_file",
+        mock_generate_requirements_file,
+    )
+    mock_generate_common_vendor_dir = MagicMock()
+    monkeypatch.setattr(
+        "agent_plugin_builder.vendor_dir_generation.generate_common_vendor_dir",
+        mock_generate_common_vendor_dir,
+    )
+
+    agent_plugin_build_options = get_agent_plugin_build_options(
+        PlatformDependencyPackagingMethod.COMMON
+    )
+    generate_vendor_directories(agent_plugin_build_options, agent_plugin_manifest)
+
+    mock_generate_requirements_file.assert_called_with(
+        agent_plugin_build_options.build_dir_path, agent_plugin_build_options.verify_hashes
+    )
+    mock_generate_common_vendor_dir.assert_called_with(
+        agent_plugin_build_options.build_dir_path,
+        agent_plugin_build_options.source_dir_name,
+    )
+
+
+def test_generate_vendor_directories__separate_dependencies(
+    monkeypatch, get_agent_plugin_build_options, agent_plugin_manifest
+):
+    mock_generate_requirements_file = MagicMock()
+    monkeypatch.setattr(
+        "agent_plugin_builder.vendor_dir_generation.generate_requirements_file",
+        mock_generate_requirements_file,
+    )
+    mock_generate_vendor_dirs = MagicMock()
+    monkeypatch.setattr(
+        "agent_plugin_builder.vendor_dir_generation.generate_vendor_dirs",
+        mock_generate_vendor_dirs,
+    )
+
+    agent_plugin_build_options = get_agent_plugin_build_options(
+        PlatformDependencyPackagingMethod.SEPARATE
+    )
+    generate_vendor_directories(agent_plugin_build_options, agent_plugin_manifest)
+
+    mock_generate_requirements_file.assert_called_with(
+        agent_plugin_build_options.build_dir_path, agent_plugin_build_options.verify_hashes
+    )
+    assert mock_generate_vendor_dirs.call_count == 2
+    for call in mock_generate_vendor_dirs.call_args_list:
+        assert call[0][0] == agent_plugin_build_options.build_dir_path
+        assert call[0][1] == agent_plugin_build_options.source_dir_name
+        assert call[0][2] in [OperatingSystem.WINDOWS, OperatingSystem.LINUX]
+
+
+def test_generate_vendor_directories_autodetect_common_deps(
+    monkeypatch, get_agent_plugin_build_options, agent_plugin_manifest
+):
+    mock_generate_requirements_file = MagicMock()
+    monkeypatch.setattr(
+        "agent_plugin_builder.vendor_dir_generation.generate_requirements_file",
+        mock_generate_requirements_file,
+    )
+    monkeypatch.setattr(
+        "agent_plugin_builder.vendor_dir_generation.should_use_common_vendor_dir",
+        lambda _: True,
+    )
+    mock_generate_common_vendor_dir = MagicMock()
+    monkeypatch.setattr(
+        "agent_plugin_builder.vendor_dir_generation.generate_common_vendor_dir",
+        mock_generate_common_vendor_dir,
+    )
+
+    agent_plugin_build_options = get_agent_plugin_build_options(
+        PlatformDependencyPackagingMethod.AUTODETECT
+    )
+    generate_vendor_directories(agent_plugin_build_options, agent_plugin_manifest)
+
+    mock_generate_requirements_file.assert_called_with(
+        agent_plugin_build_options.build_dir_path, agent_plugin_build_options.verify_hashes
+    )
+    mock_generate_common_vendor_dir.assert_called_with(
+        agent_plugin_build_options.build_dir_path,
+        agent_plugin_build_options.source_dir_name,
+    )
+
+
+def test_generate_vendor_directories_autodetect_separate_deps(
+    monkeypatch, get_agent_plugin_build_options, agent_plugin_manifest
+):
+    mock_generate_requirements_file = MagicMock()
+    monkeypatch.setattr(
+        "agent_plugin_builder.vendor_dir_generation.generate_requirements_file",
+        mock_generate_requirements_file,
+    )
+    monkeypatch.setattr(
+        "agent_plugin_builder.vendor_dir_generation.should_use_common_vendor_dir",
+        lambda _: False,
+    )
+    mock_generate_vendor_dirs = MagicMock()
+    monkeypatch.setattr(
+        "agent_plugin_builder.vendor_dir_generation.generate_vendor_dirs",
+        mock_generate_vendor_dirs,
+    )
+
+    agent_plugin_build_options = get_agent_plugin_build_options(
+        PlatformDependencyPackagingMethod.AUTODETECT
+    )
+    generate_vendor_directories(agent_plugin_build_options, agent_plugin_manifest)
+
+    mock_generate_requirements_file.assert_called_with(
+        agent_plugin_build_options.build_dir_path, agent_plugin_build_options.verify_hashes
+    )
+    assert mock_generate_vendor_dirs.call_count == 2
+    for call in mock_generate_vendor_dirs.call_args_list:
+        assert call[0][0] == agent_plugin_build_options.build_dir_path
+        assert call[0][1] == agent_plugin_build_options.source_dir_name
+        assert call[0][2] in [OperatingSystem.WINDOWS, OperatingSystem.LINUX]
 
 
 @pytest.mark.integration
