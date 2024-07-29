@@ -106,139 +106,6 @@ def write_poetry_lock(tmpdir, data_for_tests_dir):
 
 
 @pytest.mark.integration
-def test_should_use_common_vendor_dir__not_possible(write_requirements_file):
-    build_dir_path = write_requirements_file("requirements_common_not_possible.txt")
-
-    assert not should_use_common_vendor_dir(build_dir_path)
-
-
-@pytest.mark.integration
-def test_should_use_common_vendor_dir__possible(write_requirements_file):
-    build_dir_path = write_requirements_file("requirements_common_possible.txt")
-
-    assert should_use_common_vendor_dir(build_dir_path)
-
-
-def test_should_use_common_vendor_dir__nonexisting_requirements_file(tmpdir):
-    assert not (BUILD_DIR_PATH / "requirements.txt").exists()
-    with pytest.raises(FileNotFoundError):
-        should_use_common_vendor_dir(BUILD_DIR_PATH)
-
-
-def test_should_use_common_vendor_dir_same_packages(
-    monkeypatch, mock_docker, mock_load_package_names
-):
-    monkeypatch.setattr(
-        "agent_plugin_builder.vendor_dir_generation.Path.exists", MagicMock(return_value=True)
-    )
-    result = should_use_common_vendor_dir(BUILD_DIR_PATH)
-
-    assert result is True
-
-
-def test_should_use_common_vendor_dir_diff_packages(
-    monkeypatch, mock_docker, mock_load_package_names_diff
-):
-    monkeypatch.setattr(
-        "agent_plugin_builder.vendor_dir_generation.Path.exists", MagicMock(return_value=True)
-    )
-    result = should_use_common_vendor_dir(BUILD_DIR_PATH)
-
-    assert result is False
-
-
-def test_generate_vendor_dirs(monkeypatch):
-    source_dir_name = "source_dir"
-    mock_generate_linux_vendor_dir = MagicMock()
-    monkeypatch.setattr(
-        "agent_plugin_builder.vendor_dir_generation.generate_common_vendor_dir",
-        mock_generate_linux_vendor_dir,
-    )
-    mock_generate_windows_vendor_dir = MagicMock()
-    monkeypatch.setattr(
-        "agent_plugin_builder.vendor_dir_generation.generate_windows_vendor_dir",
-        mock_generate_windows_vendor_dir,
-    )
-
-    generate_vendor_dirs(BUILD_DIR_PATH, source_dir_name, OperatingSystem.LINUX)
-    mock_generate_linux_vendor_dir.assert_called_once()
-
-    generate_vendor_dirs(BUILD_DIR_PATH, source_dir_name, OperatingSystem.WINDOWS)
-    mock_generate_windows_vendor_dir.assert_called_once()
-
-
-def test_generate_vendor_dirs__nonexisting_os():
-    with pytest.raises(ValueError):
-        generate_vendor_dirs(BUILD_DIR_PATH, "source_dir", "nonexisting_os")
-
-
-@pytest.mark.integration
-def test_generate_common_vendor_dir_integration(write_requirements_file):
-    build_dir_path = write_requirements_file("requirements_common_possible.txt")
-    generate_common_vendor_dir(build_dir_path, "source_dir", "vendor")
-
-    assert (build_dir_path / "source_dir" / "vendor").exists()
-    assert len(list((build_dir_path / "source_dir" / "vendor").iterdir())) > 0
-
-
-@pytest.mark.parametrize("vendor_dir_name", ["vendor", "vendor-linux"])
-def test_generate_common_vendor_dir(monkeypatch, mock_docker, vendor_dir_name):
-    source_dir_name = "source_dir"
-    monkeypatch.setattr(
-        "agent_plugin_builder.vendor_dir_generation.getuid", MagicMock(return_value=1002)
-    )
-    monkeypatch.setattr(
-        "agent_plugin_builder.vendor_dir_generation.getgid", MagicMock(return_value=1030)
-    )
-    generate_common_vendor_dir(BUILD_DIR_PATH, source_dir_name, vendor_dir_name)
-
-    mock_docker.return_value.containers.run.assert_called_once()
-    expected_vendor_path = f"{source_dir_name}/{vendor_dir_name}"
-    mock_docker.return_value.containers.run.assert_called_with(
-        LINUX_PLUGIN_BUILDER_IMAGE,
-        command=(
-            "/bin/bash -l -c "
-            f"'{LINUX_BUILD_VENDOR_DIR_COMMANDS.format(vendor_path=f'{expected_vendor_path}')}'"
-        ),
-        volumes={str(BUILD_DIR_PATH): {"bind": "/plugin", "mode": "rw"}},
-        remove=True,
-        user="1002:1030",
-    )
-
-
-@pytest.mark.integration
-def test_generate_windows_vendor_dir_integration(write_requirements_file):
-    build_dir_path = write_requirements_file("requirements_common_not_possible.txt")
-    generate_windows_vendor_dir(build_dir_path, "source_dir")
-
-    assert (build_dir_path / "source_dir" / "vendor-windows").exists()
-    assert len(list((build_dir_path / "source_dir" / "vendor-windows").iterdir())) > 0
-
-
-def test_generate_windows_vendor_dir(monkeypatch, mock_docker):
-    source_dir_name = "source_dir"
-    monkeypatch.setattr(
-        "agent_plugin_builder.vendor_dir_generation.getuid", MagicMock(return_value=1202)
-    )
-    monkeypatch.setattr(
-        "agent_plugin_builder.vendor_dir_generation.getgid", MagicMock(return_value=1230)
-    )
-    generate_windows_vendor_dir(BUILD_DIR_PATH, source_dir_name)
-
-    mock_docker.return_value.containers.run.assert_called_once()
-    mock_docker.return_value.containers.run.assert_called_with(
-        WINDOWS_PLUGIN_BUILDER_IMAGE,
-        command=(
-            "/bin/bash -l -c "
-            f"'{WINDOWS_BUILD_VENDOR_DIR_COMMANDS.format(source_dir_name=f'{source_dir_name}')}'"
-        ),
-        volumes={str(BUILD_DIR_PATH): {"bind": "/plugin", "mode": "rw"}},
-        remove=True,
-        user="1202:1230",
-    )
-
-
-@pytest.mark.integration
 @pytest.mark.parametrize(
     "verify_hashes, expected_requirements",
     [
@@ -329,3 +196,136 @@ def test_generate_requirements_file_command_error(monkeypatch, mock_run_command)
 
     with pytest.raises(CommandRunError):
         generate_requirements_file(BUILD_DIR_PATH, verify_hashes=True)
+
+
+@pytest.mark.integration
+def test_generate_common_vendor_dir_integration(write_requirements_file):
+    build_dir_path = write_requirements_file("requirements_common_possible.txt")
+    generate_common_vendor_dir(build_dir_path, "source_dir", "vendor")
+
+    assert (build_dir_path / "source_dir" / "vendor").exists()
+    assert len(list((build_dir_path / "source_dir" / "vendor").iterdir())) > 0
+
+
+@pytest.mark.parametrize("vendor_dir_name", ["vendor", "vendor-linux"])
+def test_generate_common_vendor_dir(monkeypatch, mock_docker, vendor_dir_name):
+    source_dir_name = "source_dir"
+    monkeypatch.setattr(
+        "agent_plugin_builder.vendor_dir_generation.getuid", MagicMock(return_value=1002)
+    )
+    monkeypatch.setattr(
+        "agent_plugin_builder.vendor_dir_generation.getgid", MagicMock(return_value=1030)
+    )
+    generate_common_vendor_dir(BUILD_DIR_PATH, source_dir_name, vendor_dir_name)
+
+    mock_docker.return_value.containers.run.assert_called_once()
+    expected_vendor_path = f"{source_dir_name}/{vendor_dir_name}"
+    mock_docker.return_value.containers.run.assert_called_with(
+        LINUX_PLUGIN_BUILDER_IMAGE,
+        command=(
+            "/bin/bash -l -c "
+            f"'{LINUX_BUILD_VENDOR_DIR_COMMANDS.format(vendor_path=f'{expected_vendor_path}')}'"
+        ),
+        volumes={str(BUILD_DIR_PATH): {"bind": "/plugin", "mode": "rw"}},
+        remove=True,
+        user="1002:1030",
+    )
+
+
+def test_generate_vendor_dirs(monkeypatch):
+    source_dir_name = "source_dir"
+    mock_generate_linux_vendor_dir = MagicMock()
+    monkeypatch.setattr(
+        "agent_plugin_builder.vendor_dir_generation.generate_common_vendor_dir",
+        mock_generate_linux_vendor_dir,
+    )
+    mock_generate_windows_vendor_dir = MagicMock()
+    monkeypatch.setattr(
+        "agent_plugin_builder.vendor_dir_generation.generate_windows_vendor_dir",
+        mock_generate_windows_vendor_dir,
+    )
+
+    generate_vendor_dirs(BUILD_DIR_PATH, source_dir_name, OperatingSystem.LINUX)
+    mock_generate_linux_vendor_dir.assert_called_once()
+
+    generate_vendor_dirs(BUILD_DIR_PATH, source_dir_name, OperatingSystem.WINDOWS)
+    mock_generate_windows_vendor_dir.assert_called_once()
+
+
+def test_generate_vendor_dirs__nonexisting_os():
+    with pytest.raises(ValueError):
+        generate_vendor_dirs(BUILD_DIR_PATH, "source_dir", "nonexisting_os")
+
+
+@pytest.mark.integration
+def test_generate_windows_vendor_dir_integration(write_requirements_file):
+    build_dir_path = write_requirements_file("requirements_common_not_possible.txt")
+    generate_windows_vendor_dir(build_dir_path, "source_dir")
+
+    assert (build_dir_path / "source_dir" / "vendor-windows").exists()
+    assert len(list((build_dir_path / "source_dir" / "vendor-windows").iterdir())) > 0
+
+
+def test_generate_windows_vendor_dir(monkeypatch, mock_docker):
+    source_dir_name = "source_dir"
+    monkeypatch.setattr(
+        "agent_plugin_builder.vendor_dir_generation.getuid", MagicMock(return_value=1202)
+    )
+    monkeypatch.setattr(
+        "agent_plugin_builder.vendor_dir_generation.getgid", MagicMock(return_value=1230)
+    )
+    generate_windows_vendor_dir(BUILD_DIR_PATH, source_dir_name)
+
+    mock_docker.return_value.containers.run.assert_called_once()
+    mock_docker.return_value.containers.run.assert_called_with(
+        WINDOWS_PLUGIN_BUILDER_IMAGE,
+        command=(
+            "/bin/bash -l -c "
+            f"'{WINDOWS_BUILD_VENDOR_DIR_COMMANDS.format(source_dir_name=f'{source_dir_name}')}'"
+        ),
+        volumes={str(BUILD_DIR_PATH): {"bind": "/plugin", "mode": "rw"}},
+        remove=True,
+        user="1202:1230",
+    )
+
+
+@pytest.mark.integration
+def test_should_use_common_vendor_dir__not_possible(write_requirements_file):
+    build_dir_path = write_requirements_file("requirements_common_not_possible.txt")
+
+    assert not should_use_common_vendor_dir(build_dir_path)
+
+
+@pytest.mark.integration
+def test_should_use_common_vendor_dir__possible(write_requirements_file):
+    build_dir_path = write_requirements_file("requirements_common_possible.txt")
+
+    assert should_use_common_vendor_dir(build_dir_path)
+
+
+def test_should_use_common_vendor_dir__nonexisting_requirements_file(tmpdir):
+    assert not (BUILD_DIR_PATH / "requirements.txt").exists()
+    with pytest.raises(FileNotFoundError):
+        should_use_common_vendor_dir(BUILD_DIR_PATH)
+
+
+def test_should_use_common_vendor_dir_same_packages(
+    monkeypatch, mock_docker, mock_load_package_names
+):
+    monkeypatch.setattr(
+        "agent_plugin_builder.vendor_dir_generation.Path.exists", MagicMock(return_value=True)
+    )
+    result = should_use_common_vendor_dir(BUILD_DIR_PATH)
+
+    assert result is True
+
+
+def test_should_use_common_vendor_dir_diff_packages(
+    monkeypatch, mock_docker, mock_load_package_names_diff
+):
+    monkeypatch.setattr(
+        "agent_plugin_builder.vendor_dir_generation.Path.exists", MagicMock(return_value=True)
+    )
+    result = should_use_common_vendor_dir(BUILD_DIR_PATH)
+
+    assert result is False

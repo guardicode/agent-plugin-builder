@@ -6,11 +6,11 @@ from .plugin_manifest import (
 )
 from .vendor_dir_generation import (
     generate_vendor_directories,
+    generate_requirements_file,
     generate_common_vendor_dir,
     generate_vendor_dirs,
-    should_use_common_vendor_dir,
-    generate_requirements_file,
     generate_windows_vendor_dir,
+    should_use_common_vendor_dir,
 )
 from .plugin_schema_generation import generate_plugin_config_schema
 from .plugin_archive_generation import (
