@@ -12,7 +12,14 @@ from .vendor_dir_generation import generate_vendor_directories
 
 logger = logging.getLogger(__name__)
 
-
+EXCLUDE_SOURCE_FILES = [
+    "__pycache__",
+    ".mypy_cache",
+    ".pytest_cache",
+    ".git",
+    ".gitignore",
+    ".DS_Store",
+]
 SOURCE = "source"
 
 
@@ -39,10 +46,10 @@ def create_agent_plugin_archive(
     create_source_archive(
         agent_plugin_build_options.build_dir_path, agent_plugin_build_options.source_dir_name
     )
-    plugin_archive = create_plugin_archive(
+    plugin_archive_path = create_plugin_archive(
         agent_plugin_build_options.build_dir_path, agent_plugin_manifest
     )
-    _copy_plugin_archive_to_dist(plugin_archive, agent_plugin_build_options.dist_dir_path)
+    _copy_plugin_archive_to_dist(plugin_archive_path, agent_plugin_build_options.dist_dir_path)
 
 
 def _copy_plugin_archive_to_dist(plugin_filepath: Path, dist_dir_path: Path):
@@ -75,16 +82,7 @@ def create_source_archive(build_dir_path: Path, source_dir_name: SourceDirName) 
 
 
 def _source_archive_filter(file_info: tarfile.TarInfo) -> tarfile.TarInfo | None:
-    EXCLUDE_FILES = [
-        "__pycache__",
-        ".mypy_cache",
-        ".pytest_cache",
-        ".git",
-        ".gitignore",
-        ".DS_Store",
-    ]
-
-    if any(exclude in file_info.name for exclude in EXCLUDE_FILES):
+    if any(exclude in file_info.name for exclude in EXCLUDE_SOURCE_FILES):
         return None
     return file_info
 
