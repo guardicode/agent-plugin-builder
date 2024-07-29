@@ -5,11 +5,12 @@ from pathlib import Path
 from shlex import quote
 from typing import Final, Sequence
 
-from monkeytypes import OperatingSystem
+from monkeytypes import AgentPluginManifest, OperatingSystem
 
 import docker
 
-from .agent_plugin_build_options import SourceDirName
+from .agent_plugin_build_options import AgentPluginBuildOptions, SourceDirName
+from .platform_dependency_packaging_method import PlatformDependencyPackagingMethod
 
 logger = logging.getLogger(__name__)
 
@@ -60,6 +61,60 @@ WINDOWS_BUILD_VENDOR_DIR_COMMANDS: Final = " && ".join(
         "wine pip install -r requirements.txt -t {source_dir_name}/vendor-windows",
     ]
 )
+
+
+def generate_vendor_directories(
+    agent_plugin_build_options: AgentPluginBuildOptions,
+    agent_plugin_manifest: AgentPluginManifest,
+):
+    """
+    Generate the vendor directories for the plugin.
+
+    If the plugin supports multiple operating systems and the dependency_method is AUTODETECT, the
+    function will try to generate a common vendor directory. If a common vendor directory is not
+    possible, it will generate separate vendor directories for each supported operating system.
+
+    :param agent_plugin_build_options: Agent Plugin build options.
+    :param agent_plugin_manifest: Agent Plugin manifest.
+    """
+    logger.info(
+        f"Generating vendor directories for plugin: {agent_plugin_manifest.name}, "
+        f"dependency_method: {agent_plugin_build_options.platform_dependencies}"
+    )
+    generate_requirements_file(
+        agent_plugin_build_options.build_dir_path, agent_plugin_build_options.verify_hashes
+    )
+    if agent_plugin_build_options.platform_dependencies == PlatformDependencyPackagingMethod.COMMON:
+        generate_common_vendor_dir(
+            agent_plugin_build_options.build_dir_path, agent_plugin_build_options.source_dir_name
+        )
+    elif (
+        agent_plugin_build_options.platform_dependencies
+        == PlatformDependencyPackagingMethod.SEPARATE
+    ):
+        for os_type in agent_plugin_manifest.supported_operating_systems:
+            generate_vendor_dirs(
+                agent_plugin_build_options.build_dir_path,
+                agent_plugin_build_options.source_dir_name,
+                os_type,
+            )
+    else:
+        if len(agent_plugin_manifest.supported_operating_systems) > 1:
+            common_dir_possible = should_use_common_vendor_dir(
+                agent_plugin_build_options.build_dir_path
+            )
+            if common_dir_possible:
+                generate_common_vendor_dir(
+                    agent_plugin_build_options.build_dir_path,
+                    agent_plugin_build_options.source_dir_name,
+                )
+            else:
+                for os_type in agent_plugin_manifest.supported_operating_systems:
+                    generate_vendor_dirs(
+                        agent_plugin_build_options.build_dir_path,
+                        agent_plugin_build_options.source_dir_name,
+                        os_type,
+                    )
 
 
 def should_use_common_vendor_dir(build_dir_path: Path) -> bool:
