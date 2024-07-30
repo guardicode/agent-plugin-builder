@@ -4,6 +4,9 @@ from typing import Iterable, Sequence
 import pytest
 from monkeytypes import AgentPluginManifest, AgentPluginType, OperatingSystem
 
+from agent_plugin_builder import AgentPluginBuildOptions, PlatformDependencyPackagingMethod
+from agent_plugin_builder.agent_plugin_build_options import BUILD, DIST
+
 
 def pytest_addoption(parser):
     parser.addoption(
@@ -56,4 +59,23 @@ def agent_plugin_manifest():
         description="plugin_description",
         link_to_documentation="https://plugin_documentation.com",
         safe=True,
+    )
+
+
+@pytest.fixture
+def agent_plugin_build_options(tmpdir) -> AgentPluginBuildOptions:
+    plugin_dir_name = "plugin-dir"
+    plugin_dir_path = Path(tmpdir / plugin_dir_name)
+    plugin_dir_path.mkdir()
+    source_dir_name = "source_dir_name"
+    (plugin_dir_path / BUILD).mkdir()
+    (plugin_dir_path / DIST).mkdir()
+
+    return AgentPluginBuildOptions(
+        plugin_dir_path=plugin_dir_path,
+        build_dir_path=(plugin_dir_path / BUILD),
+        dist_dir_path=(plugin_dir_path / DIST),
+        source_dir_name=source_dir_name,
+        platform_dependencies=PlatformDependencyPackagingMethod.AUTODETECT,
+        verify_hashes=False,
     )

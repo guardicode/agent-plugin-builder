@@ -45,26 +45,6 @@ def list_tar_contents(tar_gz_path):
 
 
 @pytest.fixture
-def agent_plugin_build_options(tmpdir):
-    temp_dir = Path(tmpdir)
-    plugin_dir_path = temp_dir / "plugin_dir_path"
-    plugin_dir_path.mkdir()
-    build_dir_path = temp_dir / TEST_BUILD_DIR_NAME
-    build_dir_path.mkdir()
-    dist_dir_path = temp_dir / "dist_dir_path"
-    dist_dir_path.mkdir()
-
-    return AgentPluginBuildOptions(
-        plugin_dir_path=plugin_dir_path,
-        build_dir_path=build_dir_path,
-        dist_dir_path=dist_dir_path,
-        source_dir_name=TEST_SOURCE_DIR_NAME,
-        platform_dependencies=PlatformDependencyPackagingMethod.COMMON,
-        verify_hashes=False,
-    )
-
-
-@pytest.fixture
 def agent_plugin_build_options_plugin(tmpdir, data_for_tests_dir):
     plugin_dir_path_data = data_for_tests_dir / "mock-exploiter"
     plugin_dir_path = Path(tmpdir) / "mock-exploiter"

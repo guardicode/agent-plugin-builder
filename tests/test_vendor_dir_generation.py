@@ -321,7 +321,7 @@ def test_generate_requirements_file_no_lock_file(monkeypatch, mock_run_command):
     mock_run_command.assert_not_called()
 
 
-def test_generate_requirements_file_no_requiremenet_file(monkeypatch, mock_run_command):
+def test_generate_requirements_file_no_requirement_file(monkeypatch, mock_run_command):
     def mock_exists(path):
         return path.name != "requirements.txt"
 

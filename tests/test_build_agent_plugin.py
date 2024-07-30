@@ -1,32 +1,10 @@
 import shutil
-from pathlib import Path
 from unittest.mock import MagicMock
 
 import pytest
 from monkeytypes import AgentPluginManifest
 
-from agent_plugin_builder import (
-    AgentPluginBuildOptions,
-    PlatformDependencyPackagingMethod,
-    build_agent_plugin_archive,
-)
-
-
-@pytest.fixture
-def agent_plugin_build_options(tmpdir) -> AgentPluginBuildOptions:
-    plugin_dir_path = Path(tmpdir / "plugin-dir")
-    plugin_dir_path.mkdir()
-    (plugin_dir_path / "build").mkdir()
-    (plugin_dir_path / "dist").mkdir()
-
-    return AgentPluginBuildOptions(
-        plugin_dir_path=plugin_dir_path,
-        build_dir_path=(plugin_dir_path / "build"),
-        dist_dir_path=(plugin_dir_path / "dist"),
-        source_dir_name="plugin_dir",
-        platform_dependencies=PlatformDependencyPackagingMethod.AUTODETECT,
-        verify_hashes=False,
-    )
+from agent_plugin_builder import AgentPluginBuildOptions, build_agent_plugin_archive
 
 
 def test_build_agent_plugin_archive__plugin_dir_not_found(
