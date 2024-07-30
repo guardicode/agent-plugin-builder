@@ -1,3 +1,4 @@
+import shutil
 from pathlib import Path
 from unittest.mock import MagicMock
 
@@ -7,7 +8,7 @@ from monkeytypes import AgentPluginManifest
 from agent_plugin_builder import (
     AgentPluginBuildOptions,
     PlatformDependencyPackagingMethod,
-    build_agent_plugin,
+    build_agent_plugin_archive,
 )
 
 AGENT_PLUGIN_MANIFEST = AgentPluginManifest(
@@ -38,45 +39,46 @@ def agent_plugin_build_options(tmpdir):
     )
 
 
-def test_build_agent_plugin__plugin_dir_not_found(agent_plugin_build_options):
+def test_build_agent_plugin_archive__plugin_dir_not_found(agent_plugin_build_options):
     agent_plugin_build_options.dist_dir_path.rmdir()
     agent_plugin_build_options.build_dir_path.rmdir()
     agent_plugin_build_options.plugin_dir_path.rmdir()
 
     with pytest.raises(FileNotFoundError):
-        build_agent_plugin(agent_plugin_build_options, AGENT_PLUGIN_MANIFEST)
+        build_agent_plugin_archive(agent_plugin_build_options, AGENT_PLUGIN_MANIFEST)
 
 
-def test_build_agent_plugin__build_dir_not_found(agent_plugin_build_options):
+def test_build_agent_plugin_archive__build_dir_not_found(agent_plugin_build_options):
     agent_plugin_build_options.dist_dir_path.rmdir()
     agent_plugin_build_options.build_dir_path.rmdir()
 
     with pytest.raises(FileNotFoundError):
-        build_agent_plugin(agent_plugin_build_options, AGENT_PLUGIN_MANIFEST)
+        build_agent_plugin_archive(agent_plugin_build_options, AGENT_PLUGIN_MANIFEST)
 
 
 @pytest.mark.parametrize("shutil_method", ["rmtree", "copytree"])
-def test_build_agent_plugin__exceptions(monkeypatch, agent_plugin_build_options, shutil_method):
-    monkeypatch.setattr(f"shutil.{shutil_method}", MagicMock(side_effect=Exception))
+def test_build_agent_plugin_archive__exceptions(
+    monkeypatch, agent_plugin_build_options, shutil_method
+):
+    monkeypatch.setattr(f"shutil.{shutil_method}", MagicMock(side_effect=shutil.Error))
 
-    with pytest.raises(Exception):
-        build_agent_plugin(agent_plugin_build_options, AGENT_PLUGIN_MANIFEST)
+    with pytest.raises(shutil.Error):
+        build_agent_plugin_archive(agent_plugin_build_options, AGENT_PLUGIN_MANIFEST)
 
 
-# def test_build_agent_plugin__on_build_created(monkeypatch, agent_plugin_build_options):
-#     mock_create_agent_plugin_archive = MagicMock()
-#     monkeypatch.setattr(
-#         "agent_plugin_builder.plugin_archive_generation.create_agent_plugin_archive",
-#         mock_create_agent_plugin_archive,
-#     )
-#     mock_create_agent_plugin_archive.return_value = None
-#     on_build_dir_created = MagicMock()
-#
-#     build_agent_plugin(
-#     agent_plugin_build_options, AGENT_PLUGIN_MANIFEST, on_build_dir_created=on_build_dir_created
-#     )
-#
-#     on_build_dir_created.assert_called_once_with(agent_plugin_build_options.build_dir_path)
-#     mock_create_agent_plugin_archive.assert_called_once_with(
-#         agent_plugin_build_options, AGENT_PLUGIN_MANIFEST
-#     )
+def test_build_agent_plugin_archive__on_build_created(monkeypatch, agent_plugin_build_options):
+    mock_create_agent_plugin_archive = MagicMock(return_value=None)
+    monkeypatch.setattr(
+        "agent_plugin_builder.build_agent_plugin.create_agent_plugin_archive",
+        mock_create_agent_plugin_archive,
+    )
+    on_build_dir_created = MagicMock()
+
+    build_agent_plugin_archive(
+        agent_plugin_build_options, AGENT_PLUGIN_MANIFEST, on_build_dir_created=on_build_dir_created
+    )
+
+    on_build_dir_created.assert_called_once_with(agent_plugin_build_options.build_dir_path)
+    mock_create_agent_plugin_archive.assert_called_once_with(
+        agent_plugin_build_options, AGENT_PLUGIN_MANIFEST
+    )

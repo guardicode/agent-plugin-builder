@@ -13,7 +13,7 @@ from .agent_plugin_build_options import AgentPluginBuildOptions
 logger = logging.getLogger(__name__)
 
 
-def build_agent_plugin(
+def build_agent_plugin_archive(
     agent_plugin_build_options: AgentPluginBuildOptions,
     agent_plugin_manifest: AgentPluginManifest,
     on_build_dir_created: Callable[[Path], None] | None = None,
@@ -69,5 +69,4 @@ def build_agent_plugin(
         on_build_dir_created(agent_plugin_build_options.build_dir_path)
 
     logger.debug(f"Using build options: {pformat(agent_plugin_build_options.model_dump())}")
-    logger.debug(type(create_agent_plugin_archive))
     create_agent_plugin_archive(agent_plugin_build_options, agent_plugin_manifest)

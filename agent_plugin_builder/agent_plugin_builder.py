@@ -6,7 +6,7 @@ from monkeytypes import AgentPluginManifest
 
 from .agent_plugin_build_options import SourceDirName, parse_agent_plugin_build_options
 from .agent_plugin_builder_arguments import ARGUMENTS, CustomArgumentsFormatter
-from .build_agent_plugin import build_agent_plugin
+from .build_agent_plugin import build_agent_plugin_archive
 from .plugin_manifest import get_agent_plugin_manifest
 from .setup_build_plugin_logging import add_file_handler, reset_logger, setup_logging
 
@@ -29,7 +29,7 @@ def main():
     _create_build_dirs(Path(args.build_dir_path), Path(args.dist_dir_path))
     agent_plugin_build_options = parse_agent_plugin_build_options(args)
     try:
-        build_agent_plugin(
+        build_agent_plugin_archive(
             agent_plugin_build_options,
             agent_plugin_manifest,
             on_build_dir_created=lambda dir: add_file_handler(dir),

@@ -18,4 +18,4 @@ from .plugin_archive_generation import (
     create_source_archive,
     create_plugin_archive,
 )
-from .build_agent_plugin import build_agent_plugin
+from .build_agent_plugin import build_agent_plugin_archive
