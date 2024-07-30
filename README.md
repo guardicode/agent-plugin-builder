@@ -76,6 +76,10 @@ Run the following commands to install the necessary prerequisites:
 
 ### Running unit tests
 
-To run automated tests, invoke:
+To run all automated tests, invoke:
 
     poetry run pytest
+
+There are also integration tests which are slow and can be skipped by invoking:
+
+    poetry run pytest --skip-integration
