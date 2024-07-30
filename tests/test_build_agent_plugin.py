@@ -11,19 +11,9 @@ from agent_plugin_builder import (
     build_agent_plugin_archive,
 )
 
-AGENT_PLUGIN_MANIFEST = AgentPluginManifest(
-    name="testplugin",
-    plugin_type="Exploiter",
-    supported_operating_systems=["linux"],
-    target_operating_systems=["linux"],
-    title="Test Plugin",
-    version="1.0.0",
-    link_to_documentation="https://example.com",
-)
-
 
 @pytest.fixture
-def agent_plugin_build_options(tmpdir):
+def agent_plugin_build_options(tmpdir) -> AgentPluginBuildOptions:
     plugin_dir_path = Path(tmpdir / "plugin-dir")
     plugin_dir_path.mkdir()
     (plugin_dir_path / "build").mkdir()
@@ -39,34 +29,45 @@ def agent_plugin_build_options(tmpdir):
     )
 
 
-def test_build_agent_plugin_archive__plugin_dir_not_found(agent_plugin_build_options):
+def test_build_agent_plugin_archive__plugin_dir_not_found(
+    agent_plugin_build_options: AgentPluginBuildOptions, agent_plugin_manifest: AgentPluginManifest
+):
     agent_plugin_build_options.dist_dir_path.rmdir()
     agent_plugin_build_options.build_dir_path.rmdir()
     agent_plugin_build_options.plugin_dir_path.rmdir()
 
     with pytest.raises(FileNotFoundError):
-        build_agent_plugin_archive(agent_plugin_build_options, AGENT_PLUGIN_MANIFEST)
+        build_agent_plugin_archive(agent_plugin_build_options, agent_plugin_manifest)
 
 
-def test_build_agent_plugin_archive__build_dir_not_found(agent_plugin_build_options):
+def test_build_agent_plugin_archive__build_dir_not_found(
+    agent_plugin_build_options: AgentPluginBuildOptions, agent_plugin_manifest: AgentPluginManifest
+):
     agent_plugin_build_options.dist_dir_path.rmdir()
     agent_plugin_build_options.build_dir_path.rmdir()
 
     with pytest.raises(FileNotFoundError):
-        build_agent_plugin_archive(agent_plugin_build_options, AGENT_PLUGIN_MANIFEST)
+        build_agent_plugin_archive(agent_plugin_build_options, agent_plugin_manifest)
 
 
 @pytest.mark.parametrize("shutil_method", ["rmtree", "copytree"])
 def test_build_agent_plugin_archive__exceptions(
-    monkeypatch, agent_plugin_build_options, shutil_method
+    monkeypatch,
+    agent_plugin_build_options: AgentPluginBuildOptions,
+    shutil_method: str,
+    agent_plugin_manifest: AgentPluginManifest,
 ):
     monkeypatch.setattr(f"shutil.{shutil_method}", MagicMock(side_effect=shutil.Error))
 
     with pytest.raises(shutil.Error):
-        build_agent_plugin_archive(agent_plugin_build_options, AGENT_PLUGIN_MANIFEST)
+        build_agent_plugin_archive(agent_plugin_build_options, agent_plugin_manifest)
 
 
-def test_build_agent_plugin_archive__on_build_created(monkeypatch, agent_plugin_build_options):
+def test_build_agent_plugin_archive__on_build_created(
+    monkeypatch,
+    agent_plugin_build_options: AgentPluginBuildOptions,
+    agent_plugin_manifest: AgentPluginManifest,
+):
     mock_create_agent_plugin_archive = MagicMock(return_value=None)
     monkeypatch.setattr(
         "agent_plugin_builder.build_agent_plugin.create_agent_plugin_archive",
@@ -75,10 +76,10 @@ def test_build_agent_plugin_archive__on_build_created(monkeypatch, agent_plugin_
     on_build_dir_created = MagicMock()
 
     build_agent_plugin_archive(
-        agent_plugin_build_options, AGENT_PLUGIN_MANIFEST, on_build_dir_created=on_build_dir_created
+        agent_plugin_build_options, agent_plugin_manifest, on_build_dir_created=on_build_dir_created
     )
 
     on_build_dir_created.assert_called_once_with(agent_plugin_build_options.build_dir_path)
     mock_create_agent_plugin_archive.assert_called_once_with(
-        agent_plugin_build_options, AGENT_PLUGIN_MANIFEST
+        agent_plugin_build_options, agent_plugin_manifest
     )

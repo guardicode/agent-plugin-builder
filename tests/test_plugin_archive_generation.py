@@ -4,6 +4,8 @@ from pathlib import Path
 from unittest.mock import MagicMock
 
 import pytest
+from monkeytypes import AgentPluginManifest, AgentPluginType, OperatingSystem
+
 from agent_plugin_builder import (
     AgentPluginBuildOptions,
     PlatformDependencyPackagingMethod,
@@ -14,19 +16,7 @@ from agent_plugin_builder import (
 from agent_plugin_builder.plugin_archive_generation import EXCLUDE_SOURCE_FILES, SOURCE
 from agent_plugin_builder.plugin_manifest import MANIFEST
 from agent_plugin_builder.plugin_schema_generation import CONFIG_SCHEMA
-from monkeytypes import AgentPluginManifest, AgentPluginType, OperatingSystem
 
-AGENT_PLUGIN_MANIFEST = AgentPluginManifest(
-    name="Plugin",
-    plugin_type=AgentPluginType.EXPLOITER,
-    supported_operating_systems=(OperatingSystem.WINDOWS, OperatingSystem.LINUX),
-    target_operating_systems=(OperatingSystem.WINDOWS, OperatingSystem.LINUX),
-    title="plugin_title",
-    version="1.0.0",
-    description="plugin_description",
-    link_to_documentation="https://plugin_documentation.com",
-    safe=True,
-)
 TEST_SOURCE_DIR_NAME = "test_source_dir"
 TEST_BUILD_DIR_NAME = "test_build_dir"
 
@@ -152,7 +142,10 @@ def test_create_agent_plugin_archive(
 
 
 @pytest.mark.integration
-def test_create_agent_plugin_archive__dist_dir_created(agent_plugin_build_options_plugin):
+def test_create_agent_plugin_archive__dist_dir_created(
+    agent_plugin_build_options_plugin: AgentPluginBuildOptions,
+    agent_plugin_manifest: AgentPluginManifest,
+):
     agent_plugin_build_options = agent_plugin_build_options_plugin(
         PlatformDependencyPackagingMethod.COMMON
     )
@@ -164,9 +157,13 @@ def test_create_agent_plugin_archive__dist_dir_created(agent_plugin_build_option
     assert agent_plugin_build_options.dist_dir_path.is_dir()
 
 
-def test_create_agent_plugin_archive__empty_plugin(monkeypatch, agent_plugin_build_options):
+def test_create_agent_plugin_archive__empty_plugin(
+    monkeypatch,
+    agent_plugin_build_options: AgentPluginBuildOptions,
+    agent_plugin_manifest: AgentPluginManifest,
+):
     with pytest.raises(FileNotFoundError):
-        create_agent_plugin_archive(agent_plugin_build_options, AGENT_PLUGIN_MANIFEST)
+        create_agent_plugin_archive(agent_plugin_build_options, agent_plugin_manifest)
 
 
 def test_create_source_archive(tmpdir):
@@ -189,7 +186,7 @@ def test_create_source_archive(tmpdir):
     assert EXCLUDE_SOURCE_FILES not in actual_tar_files
 
 
-def test_create_plugin_archive(tmpdir):
+def test_create_plugin_archive(tmpdir, agent_plugin_manifest: AgentPluginManifest):
     temp_dir = Path(tmpdir)
     build_dir_path = temp_dir / TEST_BUILD_DIR_NAME
     build_dir_path.mkdir()
@@ -199,7 +196,7 @@ def test_create_plugin_archive(tmpdir):
     agent_plugin_manifest_file = build_dir_path / f"{MANIFEST}.yml"
     agent_plugin_manifest_file.touch()
 
-    plugin_archive_path = create_plugin_archive(build_dir_path, AGENT_PLUGIN_MANIFEST)
+    plugin_archive_path = create_plugin_archive(build_dir_path, agent_plugin_manifest)
 
     assert plugin_archive_path.exists()
     assert plugin_archive_path.name == PLUGIN_ARCHIVE_NAME
@@ -224,7 +221,9 @@ def test_create_source_archive__os_error(monkeypatch, tmpdir):
         create_source_archive(build_dir_path, TEST_SOURCE_DIR_NAME)
 
 
-def test_create_plugin_archive__removes_existing_archive(monkeypatch, tmpdir):
+def test_create_plugin_archive__removes_existing_archive(
+    monkeypatch, tmpdir, agent_plugin_manifest: AgentPluginManifest
+):
     monkeypatch.setattr(tarfile, "open", MagicMock())
     temp_dir = Path(tmpdir)
     build_dir_path = temp_dir / TEST_BUILD_DIR_NAME
@@ -233,6 +232,6 @@ def test_create_plugin_archive__removes_existing_archive(monkeypatch, tmpdir):
 
     assert (build_dir_path / PLUGIN_ARCHIVE_NAME).exists()
 
-    plugin_archive_path = create_plugin_archive(build_dir_path, AGENT_PLUGIN_MANIFEST)
+    plugin_archive_path = create_plugin_archive(build_dir_path, agent_plugin_manifest)
 
     assert not plugin_archive_path.exists()

@@ -2,7 +2,7 @@ from pathlib import Path
 from unittest.mock import MagicMock
 
 import pytest
-from monkeytypes import AgentPluginManifest, AgentPluginType, OperatingSystem
+from monkeytypes import AgentPluginManifest, OperatingSystem
 
 from agent_plugin_builder import (
     AgentPluginBuildOptions,
@@ -54,21 +54,6 @@ def get_agent_plugin_build_options(tmpdir):
         )
 
     return make_agent_plugin_build_options
-
-
-@pytest.fixture
-def agent_plugin_manifest():
-    return AgentPluginManifest(
-        name="plugin_name",
-        plugin_type=AgentPluginType.EXPLOITER,
-        supported_operating_systems=(OperatingSystem.WINDOWS, OperatingSystem.LINUX),
-        target_operating_systems=(OperatingSystem.WINDOWS, OperatingSystem.LINUX),
-        title="plugin_title",
-        version="1.0.0",
-        description="plugin_description",
-        link_to_documentation="https://plugin_documentation.com",
-        safe=True,
-    )
 
 
 @pytest.fixture
@@ -147,7 +132,7 @@ def write_poetry_lock(tmpdir, data_for_tests_dir):
 
 
 def test_generate_vendor_directories__common_dependencies(
-    monkeypatch, get_agent_plugin_build_options, agent_plugin_manifest
+    monkeypatch, get_agent_plugin_build_options, agent_plugin_manifest: AgentPluginManifest
 ):
     mock_generate_requirements_file = MagicMock()
     monkeypatch.setattr(
@@ -175,7 +160,7 @@ def test_generate_vendor_directories__common_dependencies(
 
 
 def test_generate_vendor_directories__separate_dependencies(
-    monkeypatch, get_agent_plugin_build_options, agent_plugin_manifest
+    monkeypatch, get_agent_plugin_build_options, agent_plugin_manifest: AgentPluginManifest
 ):
     mock_generate_requirements_file = MagicMock()
     monkeypatch.setattr(
@@ -204,7 +189,7 @@ def test_generate_vendor_directories__separate_dependencies(
 
 
 def test_generate_vendor_directories_autodetect_common_deps(
-    monkeypatch, get_agent_plugin_build_options, agent_plugin_manifest
+    monkeypatch, get_agent_plugin_build_options, agent_plugin_manifest: AgentPluginManifest
 ):
     mock_generate_requirements_file = MagicMock()
     monkeypatch.setattr(
@@ -236,7 +221,7 @@ def test_generate_vendor_directories_autodetect_common_deps(
 
 
 def test_generate_vendor_directories_autodetect_separate_deps(
-    monkeypatch, get_agent_plugin_build_options, agent_plugin_manifest
+    monkeypatch, get_agent_plugin_build_options, agent_plugin_manifest: AgentPluginManifest
 ):
     mock_generate_requirements_file = MagicMock()
     monkeypatch.setattr(

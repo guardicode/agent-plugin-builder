@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import Iterable, Sequence
 
 import pytest
+from monkeytypes import AgentPluginManifest, AgentPluginType, OperatingSystem
 
 
 def pytest_addoption(parser):
@@ -41,3 +42,18 @@ def _mark_skipped_tests(
 @pytest.fixture(scope="session")
 def data_for_tests_dir(pytestconfig):
     return Path(pytestconfig.rootdir) / "tests" / "data_for_tests"
+
+
+@pytest.fixture
+def agent_plugin_manifest():
+    return AgentPluginManifest(
+        name="Plugin",
+        plugin_type=AgentPluginType.EXPLOITER,
+        supported_operating_systems=(OperatingSystem.WINDOWS, OperatingSystem.LINUX),
+        target_operating_systems=(OperatingSystem.WINDOWS, OperatingSystem.LINUX),
+        title="plugin_title",
+        version="1.0.0",
+        description="plugin_description",
+        link_to_documentation="https://plugin_documentation.com",
+        safe=True,
+    )
