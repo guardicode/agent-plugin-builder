@@ -1,3 +1,3 @@
-from agent_plugin_builder.agent_plugin_builder import CustomFormatter
+from agent_plugin_builder.agent_plugin_builder_arguments import CustomArgumentsFormatter
 
-CustomFormatter._get_help_string
+CustomArgumentsFormatter._get_help_string

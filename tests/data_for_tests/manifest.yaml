@@ -1,0 +1,13 @@
+name: plugin_name_yaml
+plugin_type: Exploiter
+supported_operating_systems:
+  - windows
+  - linux
+target_operating_systems:
+  - windows
+  - linux
+title: plugin_title_yaml
+version: 1.0.0
+description: plugin_description_yaml
+link_to_documentation: https://plugin_yaml_documentation.com
+safe: true

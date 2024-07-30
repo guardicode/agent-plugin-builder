@@ -1,0 +1,11 @@
+name: plugin_name_yml
+plugin_type: Payload
+supported_operating_systems:
+  - windows
+target_operating_systems:
+  - windows
+title: plugin_title_yml
+version: 1.0.1
+description: plugin_description_yml
+link_to_documentation: https://plugin_yml_documentation.com
+safe: false

@@ -33,15 +33,15 @@ def setup_logging(verbosity: int):
     _add_console_handler(logger, logging.Formatter(CONSOLE_FORMAT), verbosity)
 
 
-def add_file_handler(dir: Path):
+def add_file_handler(log_directory: Path):
     """
     Add a file handler to the logger
 
-    :param dir: The directory in which to write the log file
+    :param log_directory: The directory in which to write the log file
     """
 
     logger = logging.getLogger()
-    log_file_path = _get_log_file_path(dir)
+    log_file_path = _get_log_file_path(log_directory)
     logger.info(f"Writing log file to {log_file_path}")
     _add_file_handler(logger, logging.Formatter(FILE_FORMAT), log_file_path)
 
