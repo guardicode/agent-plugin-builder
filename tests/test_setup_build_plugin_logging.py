@@ -23,7 +23,9 @@ def reset_logger():
         (5, "SomeOtherString"),
     ],
 )
-def test_setup_build_plugin_logging_file_log_default_level(tmpdir, log_level, test_string):
+def test_setup_build_plugin_logging_file_log_default_level(
+    tmpdir: str, log_level: int, test_string: str
+):
     DATA_DIR = Path(tmpdir)
     LOG_FILE = DATA_DIR / agent_plugin_builder_logger.AGENT_PLUGIN_BUILDER_LOG_FILENAME
     TEST_STRING = f"Build plugin logging test (File; Log level: {test_string})"
@@ -40,7 +42,7 @@ def test_setup_build_plugin_logging_file_log_default_level(tmpdir, log_level, te
         assert TEST_STRING in line  # File Log level is always debug
 
 
-def test_setup_build_plugin_logging_console_log_level_debug(capsys, tmpdir):
+def test_setup_build_plugin_logging_console_log_level_debug(capsys, tmpdir: str):
     LOG_LEVEL = 4
     TEST_STRING = "Build plugin logging test (Console; Log level: debug)"
 
@@ -54,7 +56,7 @@ def test_setup_build_plugin_logging_console_log_level_debug(capsys, tmpdir):
 
 
 @pytest.mark.parametrize("log_level", [-1, 3, 7])
-def test_setup_build_plugin_logging_console_log_default_level(capsys, tmpdir, log_level):
+def test_setup_build_plugin_logging_console_log_default_level(capsys, tmpdir: str, log_level: int):
     TEST_STRING = "Build plugin logging test (Console; Log level: debug)"
 
     agent_plugin_builder_logger.setup_logging(log_level)

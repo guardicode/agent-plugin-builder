@@ -43,7 +43,7 @@ def get_agent_plugin_build_options(tmpdir):
     dist_dir_path = temp_dir / "dist_dir_path"
     dist_dir_path.mkdir()
 
-    def make_agent_plugin_build_options(platform_dependencies):
+    def make_agent_plugin_build_options(platform_dependencies) -> AgentPluginBuildOptions:
         return AgentPluginBuildOptions(
             plugin_dir_path=plugin_dir_path,
             build_dir_path=build_dir_path,
@@ -67,7 +67,7 @@ def mock_docker(monkeypatch):
 
 @pytest.fixture
 def mock_load_package_names(monkeypatch):
-    def _mock_load_package_names(file_path):
+    def _mock_load_package_names(file_path: Path):
         if file_path == LINUX_PACKAGE_FILE_PATH:
             return LINUX_PACKAGES
         elif file_path == WINDOWS_PACKAGE_FILE_PATH:
@@ -83,7 +83,7 @@ def mock_load_package_names(monkeypatch):
 
 @pytest.fixture
 def mock_load_package_names_diff(monkeypatch):
-    def _mock_load_package_names(file_path):
+    def _mock_load_package_names(file_path: Path):
         if file_path == LINUX_PACKAGE_FILE_PATH:
             return LINUX_PACKAGES
         elif file_path == WINDOWS_PACKAGE_FILE_PATH:
@@ -105,8 +105,8 @@ def mock_run_command(monkeypatch):
 
 
 @pytest.fixture
-def write_requirements_file(tmpdir, data_for_tests_dir):
-    def inner(filename):
+def write_requirements_file(tmpdir: str, data_for_tests_dir: Path):
+    def inner(filename: str):
         build_dir_path = Path(tmpdir)
         data_requirements = (data_for_tests_dir / filename).read_text()
         (build_dir_path / "requirements.txt").write_text(data_requirements)
@@ -117,7 +117,7 @@ def write_requirements_file(tmpdir, data_for_tests_dir):
 
 
 @pytest.fixture
-def write_poetry_lock(tmpdir, data_for_tests_dir):
+def write_poetry_lock(tmpdir: str, data_for_tests_dir: Path):
     def inner():
         build_dir_path = Path(tmpdir)
         poetry_data = (data_for_tests_dir / "poetry.lock").read_text()
@@ -262,7 +262,7 @@ def test_generate_vendor_directories_autodetect_separate_deps(
     ],
 )
 def test_generate_requirements_file__integration_hashes(
-    data_for_tests_dir, write_poetry_lock, verify_hashes, expected_requirements
+    data_for_tests_dir: Path, write_poetry_lock, verify_hashes: bool, expected_requirements: str
 ):
     build_dir_path = write_poetry_lock()
 
@@ -292,8 +292,10 @@ def test_generate_requirements_file__integration_hashes(
         ),
     ],
 )
-def test_generate_requirements_file(monkeypatch, mock_run_command, verify_hashes, expected_command):
-    def mock_exists(path):
+def test_generate_requirements_file(
+    monkeypatch, mock_run_command, verify_hashes: bool, expected_command: str
+):
+    def mock_exists(path: Path):
         if path.name == "poetry.lock":
             return True
         if path.name == "requirements.txt":
@@ -310,7 +312,7 @@ def test_generate_requirements_file(monkeypatch, mock_run_command, verify_hashes
 
 
 def test_generate_requirements_file_no_lock_file(monkeypatch, mock_run_command):
-    def mock_exists(path):
+    def mock_exists(path: Path):
         return path.name != "poetry.lock"
 
     monkeypatch.setattr(Path, "exists", mock_exists)
@@ -322,7 +324,7 @@ def test_generate_requirements_file_no_lock_file(monkeypatch, mock_run_command):
 
 
 def test_generate_requirements_file_no_requirement_file(monkeypatch, mock_run_command):
-    def mock_exists(path):
+    def mock_exists(path: Path):
         return path.name != "requirements.txt"
 
     monkeypatch.setattr(Path, "exists", mock_exists)
@@ -337,7 +339,7 @@ def test_generate_requirements_file_command_error(monkeypatch, mock_run_command)
     mock_run_command = MagicMock(return_value=2)
     monkeypatch.setattr("agent_plugin_builder.vendor_dir_generation._run_command", mock_run_command)
 
-    def mock_exists(path):
+    def mock_exists(path: Path):
         return path.name == "poetry.lock"
 
     monkeypatch.setattr(Path, "exists", mock_exists)
@@ -356,7 +358,7 @@ def test_generate_common_vendor_dir_integration(write_requirements_file):
 
 
 @pytest.mark.parametrize("vendor_dir_name", ["vendor", "vendor-linux"])
-def test_generate_common_vendor_dir(monkeypatch, mock_docker, vendor_dir_name):
+def test_generate_common_vendor_dir(monkeypatch, mock_docker, vendor_dir_name: str):
     source_dir_name = "source_dir"
     monkeypatch.setattr(
         "agent_plugin_builder.vendor_dir_generation.getuid", MagicMock(return_value=1002)
@@ -451,7 +453,7 @@ def test_should_use_common_vendor_dir__possible(write_requirements_file):
     assert should_use_common_vendor_dir(build_dir_path)
 
 
-def test_should_use_common_vendor_dir__nonexisting_requirements_file(tmpdir):
+def test_should_use_common_vendor_dir__nonexisting_requirements_file(tmpdir: str):
     assert not (BUILD_DIR_PATH / "requirements.txt").exists()
     with pytest.raises(FileNotFoundError):
         should_use_common_vendor_dir(BUILD_DIR_PATH)

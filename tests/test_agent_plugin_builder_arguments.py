@@ -12,11 +12,11 @@ from agent_plugin_builder.agent_plugin_builder_arguments import (
 
 
 @pytest.fixture
-def formatter():
+def formatter() -> CustomArgumentsFormatter:
     return CustomArgumentsFormatter(prog="test")
 
 
-def test_get_help_string_source_dir(formatter):
+def test_get_help_string_source_dir(formatter: CustomArgumentsFormatter):
     action = MagicMock()
     action.help = "source directory"
     action.default = None
@@ -26,7 +26,7 @@ def test_get_help_string_source_dir(formatter):
     assert formatter._get_help_string(action) == expected_help_str
 
 
-def test_get_help_string_platform_dependencies(formatter):
+def test_get_help_string_platform_dependencies(formatter: CustomArgumentsFormatter):
     action = MagicMock()
     action.help = "platform dependencies"
     action.default = MagicMock(value="default_value")
@@ -36,7 +36,7 @@ def test_get_help_string_platform_dependencies(formatter):
     assert formatter._get_help_string(action) == expected_help_str
 
 
-def test_get_help_string_hashes(formatter):
+def test_get_help_string_hashes(formatter: CustomArgumentsFormatter):
     action = MagicMock()
     action.help = "hashes"
     action.default = True
@@ -46,7 +46,7 @@ def test_get_help_string_hashes(formatter):
     assert formatter._get_help_string(action) == expected_help_str
 
 
-def test_get_help_string_verbosity(formatter):
+def test_get_help_string_verbosity(formatter: CustomArgumentsFormatter):
     action = MagicMock()
     action.help = "verbosity level"
     action.default = -1
@@ -57,7 +57,7 @@ def test_get_help_string_verbosity(formatter):
     assert formatter._get_help_string(action) == expected_help_str
 
 
-def test_get_help_string_default(formatter):
+def test_get_help_string_default(formatter: CustomArgumentsFormatter):
     action = MagicMock()
     action.help = "some argument"
     action.default = "default_value"

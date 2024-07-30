@@ -33,7 +33,7 @@ MOCK_AGENT_PLUGIN_MANIFEST = AgentPluginManifest(
 )
 
 
-def list_tar_contents(tar_gz_path):
+def list_tar_contents(tar_gz_path: Path) -> list[str]:
     """
     List the contents of a .tar.gz archive.
 
@@ -45,7 +45,7 @@ def list_tar_contents(tar_gz_path):
 
 
 @pytest.fixture
-def agent_plugin_build_options_plugin(tmpdir, data_for_tests_dir):
+def agent_plugin_build_options_plugin(tmpdir: str, data_for_tests_dir: Path):
     plugin_dir_path_data = data_for_tests_dir / "mock-exploiter"
     plugin_dir_path = Path(tmpdir) / "mock-exploiter"
     plugin_dir_path.mkdir()
@@ -56,7 +56,7 @@ def agent_plugin_build_options_plugin(tmpdir, data_for_tests_dir):
     dist_dir_path = plugin_dir_path / "dist"
     dist_dir_path.mkdir()
 
-    def make_agent_plugin_build_options(platform_dependencies):
+    def make_agent_plugin_build_options(platform_dependencies: PlatformDependencyPackagingMethod):
         return AgentPluginBuildOptions(
             plugin_dir_path=plugin_dir_path,
             build_dir_path=build_dir_path,
@@ -104,7 +104,9 @@ def agent_plugin_build_options_plugin(tmpdir, data_for_tests_dir):
 )
 @pytest.mark.integration
 def test_create_agent_plugin_archive(
-    agent_plugin_build_options_plugin, platform_dependencies, expected_source_tar_contents
+    agent_plugin_build_options_plugin,
+    platform_dependencies: PlatformDependencyPackagingMethod,
+    expected_source_tar_contents: list[str],
 ):
     agent_plugin_build_options = agent_plugin_build_options_plugin(platform_dependencies)
 
@@ -146,7 +148,7 @@ def test_create_agent_plugin_archive__empty_plugin(
         create_agent_plugin_archive(agent_plugin_build_options, agent_plugin_manifest)
 
 
-def test_create_source_archive(tmpdir):
+def test_create_source_archive(tmpdir: str):
     temp_dir = Path(tmpdir)
     build_dir_path = temp_dir / TEST_BUILD_DIR_NAME
     build_dir_path.mkdir()
@@ -166,7 +168,7 @@ def test_create_source_archive(tmpdir):
     assert EXCLUDE_SOURCE_FILES not in actual_tar_files
 
 
-def test_create_plugin_archive(tmpdir, agent_plugin_manifest: AgentPluginManifest):
+def test_create_plugin_archive(tmpdir: str, agent_plugin_manifest: AgentPluginManifest):
     temp_dir = Path(tmpdir)
     build_dir_path = temp_dir / TEST_BUILD_DIR_NAME
     build_dir_path.mkdir()
@@ -187,7 +189,7 @@ def test_create_plugin_archive(tmpdir, agent_plugin_manifest: AgentPluginManifes
     ]
 
 
-def test_create_source_archive__os_error(monkeypatch, tmpdir):
+def test_create_source_archive__os_error(monkeypatch, tmpdir: str):
     monkeypatch.setattr(tarfile, "open", MagicMock(side_effect=OSError("Test OSError")))
     temp_dir = Path(tmpdir)
     build_dir_path = temp_dir / TEST_BUILD_DIR_NAME
@@ -202,7 +204,7 @@ def test_create_source_archive__os_error(monkeypatch, tmpdir):
 
 
 def test_create_plugin_archive__removes_existing_archive(
-    monkeypatch, tmpdir, agent_plugin_manifest: AgentPluginManifest
+    monkeypatch, tmpdir: str, agent_plugin_manifest: AgentPluginManifest
 ):
     monkeypatch.setattr(tarfile, "open", MagicMock())
     temp_dir = Path(tmpdir)

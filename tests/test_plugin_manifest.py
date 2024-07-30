@@ -35,7 +35,10 @@ EXPECTED_YML_MANIFEST = AgentPluginManifest(
     [("manifest.yaml", EXPECTED_YAML_MANIFEST), ("manifest.yml", EXPECTED_YML_MANIFEST)],
 )
 def test_get_agent_plugin_manifest(
-    monkeypatch, manifest_name, expected_manifest, data_for_tests_dir
+    monkeypatch,
+    manifest_name: str,
+    expected_manifest: AgentPluginManifest,
+    data_for_tests_dir: Path,
 ):
     monkeypatch.setattr(
         "agent_plugin_builder.plugin_manifest.get_plugin_manifest_file_path",
@@ -48,7 +51,7 @@ def test_get_agent_plugin_manifest(
 @pytest.mark.parametrize(
     "path_exists, expected_manifest_name", [(True, "manifest.yaml"), (False, "manifest.yml")]
 )
-def test_get_plugin_manifest_file_path(monkeypatch, path_exists, expected_manifest_name):
+def test_get_plugin_manifest_file_path(monkeypatch, path_exists: bool, expected_manifest_name: str):
     monkeypatch.setattr("agent_plugin_builder.plugin_manifest.Path.exists", lambda _: path_exists)
     build_dir_path = Path("build_dir_path")
 

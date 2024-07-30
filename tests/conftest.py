@@ -43,12 +43,12 @@ def _mark_skipped_tests(
 
 
 @pytest.fixture(scope="session")
-def data_for_tests_dir(pytestconfig):
+def data_for_tests_dir(pytestconfig) -> Path:
     return Path(pytestconfig.rootdir) / "tests" / "data_for_tests"
 
 
 @pytest.fixture
-def agent_plugin_manifest():
+def agent_plugin_manifest() -> AgentPluginManifest:
     return AgentPluginManifest(
         name="Plugin",
         plugin_type=AgentPluginType.EXPLOITER,
@@ -63,9 +63,9 @@ def agent_plugin_manifest():
 
 
 @pytest.fixture
-def agent_plugin_build_options(tmpdir) -> AgentPluginBuildOptions:
+def agent_plugin_build_options(tmpdir: str) -> AgentPluginBuildOptions:
     plugin_dir_name = "plugin-dir"
-    plugin_dir_path = Path(tmpdir / plugin_dir_name)
+    plugin_dir_path = Path(tmpdir) / plugin_dir_name
     plugin_dir_path.mkdir()
     source_dir_name = "source_dir_name"
     (plugin_dir_path / BUILD).mkdir()

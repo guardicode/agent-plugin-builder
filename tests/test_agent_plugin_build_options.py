@@ -101,7 +101,7 @@ def test_agent_plugin_builder_options__deserialization():
         "bash -c shell_injection",
     ],
 )
-def test_agent_plugin_builder_options__source_dir_name__invalid(source_dir_name):
+def test_agent_plugin_builder_options__source_dir_name__invalid(source_dir_name: str):
     with pytest.raises(ValueError):
         AgentPluginBuildOptions(
             plugin_dir_path=Path(PLUGIN_DIR),
@@ -131,7 +131,7 @@ def test_agent_plugin_builder_options__source_dir_name__invalid(source_dir_name)
         "PRN",
     ],
 )
-def test_agent_plugin_builder_options__plugin_dir_path__invalid(plugin_dir_path):
+def test_agent_plugin_builder_options__plugin_dir_path__invalid(plugin_dir_path: str):
     with pytest.raises(ValueError):
         AgentPluginBuildOptions(
             plugin_dir_path=Path(plugin_dir_path),
@@ -155,7 +155,9 @@ def test_agent_plugin_builder_options__plugin_dir_path__invalid(plugin_dir_path)
         "../etc/passwd",
     ],
 )
-def test_agent_plugin_builder_options__platform_dependencies__invalid(platform_dependencies):
+def test_agent_plugin_builder_options__platform_dependencies__invalid(
+    platform_dependencies: str | None,
+):
     with pytest.raises(ValueError):
         AgentPluginBuildOptions(
             plugin_dir_path=Path(PLUGIN_DIR),

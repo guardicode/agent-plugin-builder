@@ -23,7 +23,7 @@ def test_generate_plugin_config_schema__schema_exists(
 
 
 def test_generate_plugin_config_schema__default_schema(
-    monkeypatch, tmpdir, agent_plugin_manifest: AgentPluginManifest
+    monkeypatch, tmpdir: str, agent_plugin_manifest: AgentPluginManifest
 ):
     monkeypatch.setattr(
         "agent_plugin_builder.plugin_schema_generation.Path.exists", lambda _: False
@@ -37,7 +37,7 @@ def test_generate_plugin_config_schema__default_schema(
 
 
 def test_generate_plugin_config_schema__from_options(
-    data_for_tests_dir, tmpdir, agent_plugin_manifest: AgentPluginManifest
+    data_for_tests_dir: Path, tmpdir: str, agent_plugin_manifest: AgentPluginManifest
 ):
     expected_schema = {
         "properties": {
