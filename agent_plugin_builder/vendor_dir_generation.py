@@ -99,23 +99,34 @@ def generate_vendor_directories(
                 os_type,
             )
     else:
-        # TODO: Fix this logic to handle the case where the plugin supports just one OS
-        if len(agent_plugin_manifest.supported_operating_systems) > 1:
-            common_dir_possible = should_use_common_vendor_dir(
-                agent_plugin_build_options.build_dir_path
+        _autodetect_vendor_directories(agent_plugin_build_options, agent_plugin_manifest)
+
+
+def _autodetect_vendor_directories(
+    agent_plugin_build_options: AgentPluginBuildOptions, agent_plugin_manifest: AgentPluginManifest
+):
+    if len(agent_plugin_manifest.supported_operating_systems) > 1:
+        common_dir_possible = should_use_common_vendor_dir(
+            agent_plugin_build_options.build_dir_path
+        )
+        if common_dir_possible:
+            generate_common_vendor_dir(
+                agent_plugin_build_options.build_dir_path,
+                agent_plugin_build_options.source_dir_name,
             )
-            if common_dir_possible:
-                generate_common_vendor_dir(
+        else:
+            for os_type in agent_plugin_manifest.supported_operating_systems:
+                generate_vendor_dirs(
                     agent_plugin_build_options.build_dir_path,
                     agent_plugin_build_options.source_dir_name,
+                    os_type,
                 )
-            else:
-                for os_type in agent_plugin_manifest.supported_operating_systems:
-                    generate_vendor_dirs(
-                        agent_plugin_build_options.build_dir_path,
-                        agent_plugin_build_options.source_dir_name,
-                        os_type,
-                    )
+    else:
+        generate_vendor_dirs(
+            agent_plugin_build_options.build_dir_path,
+            agent_plugin_build_options.source_dir_name,
+            agent_plugin_manifest.supported_operating_systems[0],
+        )
 
 
 def generate_requirements_file(build_dir_path: Path, verify_hashes: bool = True):

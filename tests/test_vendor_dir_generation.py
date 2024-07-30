@@ -253,6 +253,49 @@ def test_generate_vendor_directories_autodetect_separate_deps(
         assert call[0][2] in [OperatingSystem.WINDOWS, OperatingSystem.LINUX]
 
 
+def test_generate_vendor_directories_autodetect_one_supported(
+    monkeypatch, get_agent_plugin_build_options, agent_plugin_manifest: AgentPluginManifest
+):
+    agent_plugin_manifest = AgentPluginManifest(
+        name=agent_plugin_manifest.name,
+        plugin_type=agent_plugin_manifest.plugin_type,
+        supported_operating_systems=(OperatingSystem.WINDOWS,),
+        target_operating_systems=(OperatingSystem.WINDOWS,),
+        title=agent_plugin_manifest.title,
+        version="1.0.0",
+        description=agent_plugin_manifest.description,
+        link_to_documentation=agent_plugin_manifest.link_to_documentation,
+        safe=agent_plugin_manifest.safe,
+    )
+    mock_generate_requirements_file = MagicMock()
+    monkeypatch.setattr(
+        "agent_plugin_builder.vendor_dir_generation.generate_requirements_file",
+        mock_generate_requirements_file,
+    )
+    monkeypatch.setattr(
+        "agent_plugin_builder.vendor_dir_generation.should_use_common_vendor_dir",
+        lambda _: False,
+    )
+    mock_generate_vendor_dirs = MagicMock()
+    monkeypatch.setattr(
+        "agent_plugin_builder.vendor_dir_generation.generate_vendor_dirs",
+        mock_generate_vendor_dirs,
+    )
+    agent_plugin_build_options = get_agent_plugin_build_options(
+        PlatformDependencyPackagingMethod.AUTODETECT
+    )
+    generate_vendor_directories(agent_plugin_build_options, agent_plugin_manifest)
+
+    mock_generate_requirements_file.assert_called_with(
+        agent_plugin_build_options.build_dir_path, agent_plugin_build_options.verify_hashes
+    )
+    assert mock_generate_vendor_dirs.call_count == 1
+    call = mock_generate_vendor_dirs.call_args_list[0]
+    assert call[0][0] == agent_plugin_build_options.build_dir_path
+    assert call[0][1] == agent_plugin_build_options.source_dir_name
+    assert call[0][2] == OperatingSystem.WINDOWS
+
+
 @pytest.mark.integration
 @pytest.mark.parametrize(
     "verify_hashes, expected_requirements",

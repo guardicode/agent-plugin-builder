@@ -90,16 +90,15 @@ def agent_plugin_build_options_plugin(tmpdir: str, data_for_tests_dir: Path):
                 "mock_options.py",
             ],
         ),
-        # TODO: Uncomment this when the TODO in vendor_dir_generation is addressed
-        #        (
-        #            PlatformDependencyPackagingMethod.AUTODETECT,
-        #            [
-        #                "vendor-linux",
-        #                "__init__.py",
-        #                "plugin.py",
-        #                "mock_options.py",
-        #            ],
-        #        ),
+        (
+            PlatformDependencyPackagingMethod.AUTODETECT,
+            [
+                "vendor-linux",
+                "__init__.py",
+                "plugin.py",
+                "mock_options.py",
+            ],
+        ),
     ],
 )
 @pytest.mark.integration
