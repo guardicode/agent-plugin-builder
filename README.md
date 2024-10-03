@@ -33,7 +33,7 @@ where:
         -d/--dist-dir-path: The path where resulting Agent Plugin archive will be stored.
         Default: <current_working_directory>/dist
 
-        -s/--source-dir: The name of the source directory.
+        -s/--source-dir-name: The name of the source directory.
         Default: <plugin_name>_<plugin_type>
 
         -pd/--platform-dependencies: The platform dependencies for the Agent Plugin.
@@ -73,3 +73,13 @@ Run the following commands to install the necessary prerequisites:
     pip install poetry pre-commit
     poetry install
     pre-commit install -t pre-commit -t prepare-commit-msg
+
+### Running unit tests
+
+To run all automated tests, invoke:
+
+    poetry run pytest
+
+There are also integration tests which are slow and can be skipped by invoking:
+
+    poetry run pytest --skip-integration

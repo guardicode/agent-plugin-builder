@@ -1,5 +1,5 @@
 [project]
-name = "agent-plugin-builder"
+name = "cryptojacker-payload"
 license = "GPLv3"
 requires-python = "^3.11"
 
@@ -9,14 +9,14 @@ line-length = 100
 
 [tool.cruft]
 skip = [
-    "agent-plugin-builder/__init__.py",
+    "cryptojacker-payload/__init__.py",
     "README.md",
     "CHANGELOG.md",
     "vulture_allowlist.py"
 ]
 
 [tool.isort]
-known_first_party = "agent-plugin-builder"
+known_first_party = "cryptojacker-payload"
 line_length = 100
 skip_glob="**/__init__.py"
 ### for compatibility with black
@@ -39,28 +39,25 @@ addopts = "-v --capture=sys tests"
 
 [tool.vulture]
 exclude=[]
-paths = ["agent_plugin_builder", "vulture_allowlist.py"]
+paths = ["cryptojacker_payload", "vulture_allowlist.py"]
 
 [tool.poetry]
-name = "agent-plugin-builder"
-version = "v0.6.0"
-description = "Builder for Agent Plugins."
+name = "cryptojacker-payload"
+description = "Cryptojacker Payload Agent Plugin for Infection Monkey"
 authors = ["Ilija Lazoroski <ilija.lazoroski@gmail.com>"]
 license = "GPLv3"
 classifiers=[
     "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
     "Programming Language :: Python :: 3.11"
 ]
-repository = "https://github.com/guardicode/agent-plugin-builder"
+repository = "https://github.com/guardicode/cryptojacker-payload"
 readme = "README.md"
 include = ["CHANGELOG.md", "README.md"]
+package-mode = false
 
 [tool.poetry.dependencies]
 python = "^3.11"
-docker = "^7.1.0"
-monkey-types = "^1.0.0"
-pyyaml = "^6.0.1"
-pip = "^24.0"
+psutil = "^6.0.0"
 
 [tool.poetry.dev-dependencies]
 black = "24.3.0"
@@ -75,8 +72,13 @@ pytest-cov = "^3.0.0"
 pytest-xdist = "^3.3.1"
 vulture = "2.9.1"
 
-[tool.poetry.scripts]
-build_agent_plugin = "agent_plugin_builder.agent_plugin_builder:main"
+[tool.poetry.group.dev.dependencies]
+monkeyevents = "^0.4.0"
+monkeytoolbox = "^0.4.0"
+monkey-agentpluginapi = "^0.11.0"
+monkey-types = "^1.0.0"
+requests-mock = "^1.12.1"
+agent-plugin-builder = "^0.5.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
