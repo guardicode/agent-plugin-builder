@@ -59,7 +59,7 @@ package-mode = false
 python = "^3.11"
 psutil = "^6.0.0"
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 black = "24.3.0"
 dlint = "0.14.1"
 flake8 = "6.0.0"
@@ -71,8 +71,6 @@ pytest = "^7.1.0"
 pytest-cov = "^3.0.0"
 pytest-xdist = "^3.3.1"
 vulture = "2.9.1"
-
-[tool.poetry.group.dev.dependencies]
 monkeyevents = "^0.4.0"
 monkeytoolbox = "^0.4.0"
 monkey-agentpluginapi = "^0.11.0"

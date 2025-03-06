@@ -62,7 +62,7 @@ monkey-types = "^1.0.0"
 pyyaml = "^6.0.1"
 pip = "^24.0"
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 black = "24.3.0"
 dlint = "0.14.1"
 flake8 = "6.0.0"
@@ -74,6 +74,9 @@ pytest = "^7.1.0"
 pytest-cov = "^3.0.0"
 pytest-xdist = "^3.3.1"
 vulture = "2.9.1"
+
+[tool.poetry.requires-plugins]
+poetry-plugin-export = ">=1.8"
 
 [tool.poetry.scripts]
 build_agent_plugin = "agent_plugin_builder.agent_plugin_builder:main"
