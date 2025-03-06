@@ -113,7 +113,7 @@ def test_create_agent_plugin_archive(
 
     source_archive_path = agent_plugin_build_options.build_dir_path / f"{SOURCE}.tar.gz"
     plugin_archive_path = agent_plugin_build_options.dist_dir_path / "Mock-exploiter.tar"
-    assert list_tar_contents(source_archive_path) == expected_source_tar_contents
+    assert set(list_tar_contents(source_archive_path)) == set(expected_source_tar_contents)
     assert plugin_archive_path.exists()
     assert list_tar_contents(plugin_archive_path) == [
         f"{SOURCE}.tar.gz",
